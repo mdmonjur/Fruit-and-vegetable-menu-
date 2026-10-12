@@ -56,3 +56,9 @@ V12 CUSTOMER ACCOUNTS + CROSS-BROWSER SUPPORT
 - PDF generation and QR creation depend on external CDN libraries and internet access. If PDF download fails in a browser, use Print Bill > Save as PDF; file sharing depends on browser/OS support.
 - IMPORTANT SECURITY LIMITATION: this project stores accounts and orders inside one shared JSON row accessed by the public browser key. Passwords are hashed, but the current shared-data design is NOT secure authentication and must not be used for sensitive/private customer data in production. Anyone with access to that public JSON endpoint may potentially read customer records. Before production use, move accounts to Supabase Auth (prefer phone/email verification) and store profiles/orders in separate tables protected by Row Level Security (RLS) or a trusted server API. Do not store payment card details or sensitive personal data here.
 - Syntax checks do not replace testing on the actual hosted URL and mobile devices.
+
+Version 14 customer-shop changes:
+- Customers can browse/search products and add items to cart without logging in.
+- Submitting an order is blocked unless a customer has created an account and is currently logged in. Creating an account signs the customer in automatically; logout requires login again before checkout.
+- Home-delivery customers can tap “Use Current Location” after login. The browser asks for location permission, then adds a Google Maps link to the delivery address and saves the latitude/longitude with the order. This requires the hosted HTTPS page and permission to access device location. Customers can still type their address manually.
+- Shop pickup hides the delivery address and current-location control.
