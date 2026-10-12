@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shop + HR Management System</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:linear-gradient(135deg,#eef6ff,#f8fbff);color:#17324d;min-height:100vh}
+.header{padding:28px 18px 18px;text-align:center;background:linear-gradient(135deg,#0d4775,#1976b9);color:#fff;box-shadow:0 4px 18px #0002}
+.header h1{margin:0;font-size:27px}.header p{margin:8px 0 0;opacity:.9}
+.container{max-width:900px;margin:30px auto;padding:0 16px}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px}
+.card{background:#fff;border-radius:18px;padding:28px 22px;text-align:center;box-shadow:0 8px 30px #164a6b18;border:1px solid #dceaf5;transition:.18s}.card:hover{transform:translateY(-3px);box-shadow:0 12px 35px #164a6b25}
+.icon{font-size:52px}.card h2{margin:12px 0 8px;font-size:23px}.card p{color:#637789;min-height:42px}
+.btn{display:block;text-decoration:none;background:#1976b9;color:#fff;padding:14px 18px;border-radius:10px;font-weight:bold;font-size:17px;margin-top:18px}.btn.hr{background:#16845b}.note{margin-top:24px;background:#fff;padding:15px;border-radius:12px;border:1px solid #dceaf5;text-align:center;color:#607487;font-size:14px}
+.footer{text-align:center;color:#718596;padding:25px 10px;font-size:13px}
+@media(max-width:650px){.grid{grid-template-columns:1fr}.header h1{font-size:23px}.container{margin-top:20px}.card{padding:24px 18px}}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>🏢 Shop + HR Management System</h1>
+  <p>All-in-one business management</p>
+</div>
+<div class="container">
+  <div class="grid">
+    <div class="card">
+      <div class="icon">🛒</div>
+      <h2>Cash Memo / Shop</h2>
+      <p>Sales • Stock • QR • Barcode • Customers • Bills</p>
+      <a class="btn" href="shop.html">Open Cash Memo / Shop →</a>
+    </div>
+    <div class="card">
+      <div class="icon">👨‍💼</div>
+      <h2>HR Management</h2>
+      <p>Employees • Attendance • Leave • Salary • Documents • Reports</p>
+      <a class="btn hr" href="hr.html">Open HR Management →</a>
+    </div>
+  </div>
+  <div class="note">⚠️ Keep <b>index.html</b>, <b>shop.html</b> and <b>hr.html</b> in the same GitHub repository folder.</div>
+</div>
+<div class="footer">Shop + HR Management System</div>
+</body>
+</html>
