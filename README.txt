@@ -1,15 +1,24 @@
-ONLINE ORDER SYSTEM UPDATE
+MR MONJUR ONLINE ORDER SYSTEM — UPDATE v6
 
-Files in this package:
-- hr.html: HR Management, with Change Admin Password page.
-- shop.html: Shop Management, product photo upload/preview, item-specific photos, customer orders, and cloud sync.
-- online-shop.html: Customer online shop, displays each product's own saved photo.
+Files:
+- online-shop.html: Customer ordering, order number + phone lookup, order progress, customer bill and print/save PDF.
+- shop.html: Admin/Salesman online-order workflow and management invoice tools.
+- hr.html: HR management page.
 
-IMPORTANT
-1. Replace/upload all three HTML files together on your website/hosting. Keep these filenames exactly the same.
-2. In Shop Management > Items & Stock, upload a photo for each product, then click Save Product. Each product can have a different photo.
-3. Product photos are resized before saving and are synced with the shop data. Keep photos reasonably small; very many high-resolution photos may exceed database/storage limits.
-4. In HR Management, log in with the current password (first-time default: Admin@1234), open “Change Admin Password”, and save the new password. This password is stored in the browser on that device only; it does not sync to other devices.
-5. Cloud order/product syncing requires the configured Supabase project and its permissions to be working. This package has been syntax-checked but not live-tested against your Supabase account.
+Management invoice features added:
+- Admin can view, download PDF, print and share every online customer order bill by WhatsApp.
+- Salesman can view/download/print/share bills only for orders assigned to or handled by their own account.
+- When a salesman accepts an unassigned order, the order is assigned to that salesman.
+- Admin can manage all orders. Salesmen cannot change an order assigned to another salesman.
+- Online order status remains: Order Received -> Accepted -> Processing -> Out for Delivery -> Delivered. Stock is deducted only when marked Delivered.
 
-Customer orders are submitted to the shop system, and stock is reduced only when an accepted order is marked Delivered.
+Install:
+1. Back up the current files.
+2. Upload/replace shop.html and online-shop.html together; keep hr.html if unchanged.
+3. Keep existing Supabase cloud settings and verify read/write permissions.
+4. Test with one customer order, one Admin login and two different Salesman logins.
+
+Important limitations:
+- This update uses the existing shared Supabase record and existing browser publishable key. Browser-side role checks are a convenience, not strong server-side security. For production-grade separation, enforce authorization in Supabase RLS or a server-side API.
+- PDF download uses the existing jsPDF CDN and generates an English/Latin-text PDF; some non-Latin product names may not render correctly without embedding a suitable font. Print can be used as an alternative.
+- Live cloud operation has not been tested from this environment.
