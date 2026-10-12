@@ -1,28 +1,15 @@
 ONLINE ORDER SYSTEM UPDATE
 
 Files in this package:
-- shop.html: Cash Memo + Stock Management with Customer Online Shop shortcut.
-- hr.html: HR Management with a separate Customer Online Shop shortcut.
-- online-shop.html: public customer order page.
+- hr.html: HR Management, with Change Admin Password page.
+- shop.html: Shop Management, product photo upload/preview, item-specific photos, customer orders, and cloud sync.
+- online-shop.html: Customer online shop, displays each product's own saved photo.
 
-Upload all three files into the SAME folder/root of the existing GitHub Pages website. Keep your existing index.html and other assets unchanged.
+IMPORTANT
+1. Replace/upload all three HTML files together on your website/hosting. Keep these filenames exactly the same.
+2. In Shop Management > Items & Stock, upload a photo for each product, then click Save Product. Each product can have a different photo.
+3. Product photos are resized before saving and are synced with the shop data. Keep photos reasonably small; very many high-resolution photos may exceed database/storage limits.
+4. In HR Management, log in with the current password (first-time default: Admin@1234), open “Change Admin Password”, and save the new password. This password is stored in the browser on that device only; it does not sync to other devices.
+5. Cloud order/product syncing requires the configured Supabase project and its permissions to be working. This package has been syntax-checked but not live-tested against your Supabase account.
 
-Customer link (if your existing site is https://mdmonjur.github.io/HR_Shop-management/):
-https://mdmonjur.github.io/HR_Shop-management/online-shop.html
-
-Order flow:
-- Customers view products loaded from the existing shop cloud data (Cloud ID 1).
-- Choose Home Delivery or Shop Collection.
-- Payment is cash only.
-- Customer presses Submit Order to save the order directly into the shop cloud system. WhatsApp is not used.
-- Stock is NOT deducted when a customer merely sends an order; the shop must confirm it first.
-
-Important: This update assumes the existing Supabase shop cloud sync (table hr_shared_data, id=1) is already working and the shop phone number is set. It does not change HR employee or salary access. Customer page exposes only the public product catalogue and shop contact details, not HR records.
-
-
-UPDATED CUSTOMER ORDER WORKFLOW (v2):
-- Customer submissions are saved into the shared cloud data as individual orders (status Pending). No WhatsApp step is used.
-- Admin and Salesman see the separate “Customer Orders” tab in shop.html.
-- Pending orders can be Accepted or Rejected; accepted orders can be marked Delivered.
-- Stock is deducted exactly once when an Accepted order is marked Delivered. Accepting or rejecting does not deduct stock.
-- This requires the Supabase hr_shared_data row (id=1) to allow the public customer page to PATCH its data. If Supabase Row Level Security/policies block updates, a secure server-side order endpoint is required instead; do not make the HR data table broadly writable without appropriate access controls.
+Customer orders are submitted to the shop system, and stock is reduced only when an accepted order is marked Delivered.

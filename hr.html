@@ -60,6 +60,7 @@ main{min-width:0}
 <button onclick="show('salesHistory');loadSalesHistory()">🧾 Employee Sales History</button>
 <a href="online-shop.html" target="_blank" rel="noopener" style="display:block;text-decoration:none;text-align:left;padding:9px 12px;margin:3px 0;border-radius:6px;background:#e7eff8;color:#173f67;font-weight:bold">🛒 Customer Online Shop</a>
 <button onclick="show('reports')">📊 Reports</button>
+<button onclick="show('passwordChange')">🔑 Change Admin Password</button>
 <button onclick="show('qrTools')">📷 QR / Transfer</button>
 <button onclick="backup()">⬇ Backup Data</button>
 <button onclick="document.getElementById('restore').click()">⬆ Restore Data</button>
@@ -278,6 +279,9 @@ main{min-width:0}
 <div style="overflow:auto"><table><thead><tr><th>Invoice</th><th>Date</th><th>Employee ID</th><th>Salesman</th><th>Customer</th><th>Items</th><th>Total</th><th>Paid</th><th>Due</th></tr></thead><tbody id="employeeSalesRows"></tbody></table></div>
 <button class="btn green no-print" onclick="printEmployeeSalesHistory()">🖨 Print / Save PDF</button></div></section>
 
+<section id="passwordChange" class="page">
+<div class="card"><h2>🔑 Change HR Admin Password</h2><p class="muted">Change the password used on the HR Management login screen. The new password is saved in this browser on this device.</p><div class="grid"><div><label>Current Password</label><input id="hrCurrentPassword" type="password" autocomplete="current-password"></div><div><label>New Password</label><input id="hrNewPassword" type="password" autocomplete="new-password" minlength="6"></div><div><label>Confirm New Password</label><input id="hrConfirmPassword" type="password" autocomplete="new-password" minlength="6"></div></div><button class="btn green" onclick="changeHrAdminPassword()">Save New Password</button><div id="hrPasswordStatus" class="muted" style="margin-top:8px"></div></div>
+</section>
 <section id="reports" class="page">
 <div class="card"><h2>Reports</h2><button class="btn" onclick="renderReports()">Refresh Report</button><button class="btn gray" onclick="window.print()">Print</button><div id="reportContent"></div></div>
 </section>
@@ -877,11 +881,13 @@ setInterval(()=>document.getElementById('clock').textContent=new Date().toLocale
 </script>
 <script>
 (function(){
-const PASSWORD='Admin@1234';
+const DEFAULT_PASSWORD='Admin@1234';
+function getHrPassword(){try{return localStorage.getItem('HR_ADMIN_PASSWORD')||DEFAULT_PASSWORD}catch(e){return DEFAULT_PASSWORD}}
+window.changeHrAdminPassword=function(){const current=document.getElementById('hrCurrentPassword').value;const next=document.getElementById('hrNewPassword').value;const confirmPass=document.getElementById('hrConfirmPassword').value;const status=document.getElementById('hrPasswordStatus');if(current!==getHrPassword()){status.textContent='❌ Current password is incorrect.';return}if(next.length<6){status.textContent='❌ New password must be at least 6 characters.';return}if(next!==confirmPass){status.textContent='❌ New passwords do not match.';return}try{localStorage.setItem('HR_ADMIN_PASSWORD',next);document.getElementById('hrCurrentPassword').value='';document.getElementById('hrNewPassword').value='';document.getElementById('hrConfirmPassword').value='';status.textContent='✅ Password changed successfully. Use the new password next time.';alert('HR Admin password changed successfully.')}catch(e){status.textContent='Could not save password in this browser.'}};
 function unlock(){
  const input=document.getElementById('adminPasswordInput');
  const status=document.getElementById('adminGateStatus');
- if(!input || input.value!==PASSWORD){if(status) status.textContent='❌ Incorrect password'; if(input){input.value='';input.focus();} return;}
+ if(!input || input.value!==getHrPassword()){if(status) status.textContent='❌ Incorrect password'; if(input){input.value='';input.focus();} return;}
  const gate=document.getElementById('adminGate'); if(gate) gate.style.display='none';
  const app=document.getElementById('appShell'); if(app) app.style.display='';
  try{ if(typeof startApp==='function') startApp(); }catch(e){console.error(e);}
