@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1280">
+<title>HR Management System</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f3f6fa;color:#172033}
+header{background:#123b68;color:#fff;padding:14px 20px;display:flex;justify-content:space-between;align-items:center}
+header h1{margin:0;font-size:22px}.wrap{display:flex;min-height:calc(100vh - 60px)}
+nav{width:220px;background:#102f52;padding:12px 8px}nav button{display:block;width:100%;margin:5px 0;padding:11px;border:0;border-radius:6px;background:#1c4d7e;color:white;text-align:left;cursor:pointer}nav button:hover{background:#28669f}
+main{flex:1;padding:20px;overflow:auto}.page{display:none}.page.active{display:block}
+.card{background:#fff;border-radius:10px;padding:16px;margin-bottom:16px;box-shadow:0 2px 8px #0001}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+label{font-weight:bold;font-size:13px;display:block;margin-bottom:5px}input,select,textarea{width:100%;padding:9px;border:1px solid #ccd5df;border-radius:5px;background:#fff}textarea{min-height:70px}
+.btn{border:0;border-radius:5px;padding:9px 14px;cursor:pointer;margin:4px 3px 4px 0;background:#1b6ca8;color:white}.btn.green{background:#218838}.btn.red{background:#c62828}.btn.gray{background:#687583}
+table{width:100%;border-collapse:collapse;background:#fff}th,td{border:1px solid #dce2e8;padding:7px;font-size:13px;text-align:left}th{background:#eaf0f6}
+.stat{font-size:28px;font-weight:bold}.muted{color:#667}
+.notice{padding:10px;background:#fff6d8;border-left:4px solid #e0a800;margin-bottom:12px}
+
+@media print{nav,header,.no-print{display:none!important}main{padding:0}.page{display:none}.page.printable{display:block}.card{box-shadow:none}}
+
+.memo-thumb{cursor:pointer;transition:.2s;border:1px solid #ccd5df}.memo-thumb:hover{transform:scale(1.05)}
+#imageLightbox{display:none;position:fixed;z-index:9999;inset:0;background:rgba(0,0,0,.85);align-items:center;justify-content:center;padding:20px}
+#imageLightbox.show{display:flex}
+#lightboxImg{max-width:95vw;max-height:90vh;object-fit:contain;border-radius:8px;box-shadow:0 4px 30px #000}
+#lightboxClose{position:absolute;top:12px;right:18px;color:#fff;font-size:36px;cursor:pointer;line-height:1}
+
+
+html,body{min-width:0}
+body{overflow-x:auto}
+.wrap{min-width:0}
+nav{width:220px;flex:0 0 220px}
+main{min-width:0}
+@media(max-width:800px){header{padding:10px;font-size:13px;flex-wrap:wrap;gap:6px}.wrap{display:block}.wrap nav{width:100%;display:flex;overflow-x:auto;gap:4px;padding:6px}.wrap nav button{white-space:nowrap}.wrap nav .notice,.wrap nav input{display:none}main{width:100%;padding:8px}.grid{grid-template-columns:1fr!important}.card{padding:10px;overflow-x:auto}table{min-width:760px}}
+
+</style>
+</head>
+<body>
+<div id="adminGate" style="position:fixed;inset:0;z-index:999999;display:flex;align-items:center;justify-content:center;background:#123b68;padding:20px;box-sizing:border-box">
+<div style="width:min(420px,94vw);background:#fff;border-radius:14px;padding:25px;box-shadow:0 12px 40px #0006;text-align:center">
+<h2 style="margin-top:0">🔐 HR Admin Login</h2>
+<p>Enter Admin Password</p>
+<input id="adminPasswordInput" type="password" placeholder="Admin Password" style="width:100%;padding:12px;box-sizing:border-box;border:1px solid #ccc;border-radius:7px">
+<button id="adminLoginBtn" style="width:100%;margin-top:12px;padding:12px;border:0;border-radius:7px;background:#1b6ca8;color:#fff;font-weight:bold">Login</button>
+<div id="adminGateStatus" style="margin-top:10px;color:#666"></div>
+</div></div>
+
+<div id="appShell" class="app-shell">
+<header><h1>HR Management System — QR Transfer</h1><div><span id="clock"></span><span class="user-chip" id="syncState">📱 Offline / Local</span><button class="btn gray" onclick="show('qrTools')">📷 QR Scan</button></div></header>
+<div class="wrap">
+<nav>
+<button onclick="show('dashboard')">🏠 Dashboard</button>
+<button onclick="show('employees')">👤 Employees</button>
+<button onclick="show('monthlyAttendance')">📅 Monthly Attendance</button>
+<button onclick="show('locations')">📍 Locations</button>
+<button onclick="show('leave')">🌴 Leave</button>
+<button onclick="show('salary')">💰 Salary / Payroll</button>
+<button onclick="show('memos')">📄 Memo File</button>
+<button onclick="show('slip')">🧾 Salary Slip</button>
+<button onclick="show('salesHistory');loadSalesHistory()">🧾 Employee Sales History</button>
+<a href="online-shop.html" target="_blank" rel="noopener" style="display:block;text-decoration:none;text-align:left;padding:9px 12px;margin:3px 0;border-radius:6px;background:#e7eff8;color:#173f67;font-weight:bold">🛒 Customer Online Shop</a>
+<button onclick="show('reports')">📊 Reports</button>
+<button onclick="show('qrTools')">📷 QR / Transfer</button>
+<button onclick="backup()">⬇ Backup Data</button>
+<button onclick="document.getElementById('restore').click()">⬆ Restore Data</button>
+<div class="notice" style="font-size:11px;background:#163d65;color:#fff;border-left-color:#65a9df;margin-top:10px">📱 Offline Mode: এই ফোনে data محفوظ থাকবে। অন্য ফোনে নিতে QR Transfer বা Backup/Restore ব্যবহার করুন।</div>
+<input id="restore" type="file" accept=".json" style="display:none" onchange="restore(event)">
+</nav>
+<main>
+
+<section id="dashboard" class="page active">
+<div class="card"><h2>Dashboard</h2><div class="grid">
+<div><div class="muted">Total Employees</div><div class="stat" id="dEmp">0</div></div>
+<div><div class="muted">Active Employees</div><div class="stat" id="dActive">0</div></div>
+<div><div class="muted">Attendance Records</div><div class="stat" id="dAtt">0</div></div>
+<div><div class="muted">Leave Records</div><div class="stat" id="dLeave">0</div></div>
+</div></div>
+
+<div class="card">
+<h2>Employee 360° Profile</h2>
+<div class="grid">
+<div><label>Employee ID</label><input id="profileId" placeholder="EMP-0001" oninput="loadEmployeeProfile()"></div>
+<div><label>Employee</label><select id="profileEmp" onchange="document.getElementById('profileId').value=this.value;loadEmployeeProfile()"></select></div>
+</div>
+<div id="profileBox" class="notice">Employee ID দিলে ওই Employee-এর Personal Details, Attendance, Leave, Salary এবং Memo সব একসাথে এখানে দেখাবে।</div>
+<div style="margin:10px 0" class="no-print">
+<button class="btn green" onclick="generateEmployeePDF()">📄 Generate / Download Full PDF</button>
+</div>
+<div id="profileDetails"></div>
+</div>
+<div class="card"><h3>Employee Search</h3><div class="grid"><div><label>Employee ID</label><input id="searchId" placeholder="EMP-0001"></div><div><label>Name</label><input id="searchName" placeholder="Search name"></div></div><button class="btn" onclick="searchEmployees()">Search</button></div>
+<div class="card"><div id="searchResult">Search result will appear here.</div></div>
+</section>
+
+<section id="employees" class="page">
+<div class="card"><h2>Employee Details</h2>
+<div class="notice"><b>Employee ID Rule:</b> Only the complete ID is considered duplicate. ASG-316, OIC-316 and ALF-316 are separate employees and adding one will never delete or replace another.<br><br>Employee Location can be changed at any time. Use Location Effective Date when moving an employee; previous Location history and records remain saved under the old Location.<br><br>Employee ID can be entered manually (for example OIC-316 or ASG-316). Different Employee IDs are stored as separate employees and will not replace or delete each other. If you leave it blank, the system will generate the next ID automatically.</div>
+<input type="hidden" id="editIndex" value="-1"><input type="hidden" id="editOriginalId" value="">
+<div class="grid">
+<div><label>Employee ID *</label><input id="eId" placeholder="EMP-0001"></div>
+<div><label>Full Name *</label><input id="eName"></div>
+<div><label>Visa Company</label><input id="eVisa"></div>
+<div><label>Division</label><input id="eDivision"></div>
+<div><label>Designation</label><input id="eDesignation"></div>
+<div><label>Department</label><input id="eDepartment"></div>
+<div><label>Category</label><input id="eCategory"></div>
+<div><label>Grade</label><input id="eGrade"></div>
+<div><label>Nationality</label><input id="eNationality"></div>
+<div><label>Gender</label><select id="eGender"><option>Male</option><option>Female</option></select></div>
+<div><label>Date of Birth</label><input id="eDob" type="date"></div>
+<div><label>Join Date</label><input id="eJoin" type="date"></div>
+<div><label>Location</label><input id="eLocation" list="locationOptions" placeholder="e.g. SUMAIL SS"><datalist id="locationOptions"></datalist></div>
+<div><label>Location Effective Date</label><input id="eLocationDate" type="date"></div>
+<div><label>Status</label><select id="eStatus"><option>Active</option><option>Inactive</option><option>On Leave</option></select></div>
+<div><label>Phone</label><input id="ePhone"></div>
+<div><label>Email</label><input id="eEmail"></div>
+</div>
+<div class="card" style="box-shadow:none;border:1px solid #dce2e8">
+<h3>📷 Employee Photo</h3>
+<input id="ePhoto" type="file" accept="image/jpeg,image/png,image/webp" onchange="readEmployeePhoto(event)">
+<div id="photoPreview" style="margin-top:8px"></div>
+</div>
+<div class="card" style="box-shadow:none;border:1px solid #dce2e8">
+<h3>📎 Employee Documents & Photos</h3>
+<div class="notice">প্রতিটি Section-এ 2, 3 বা প্রয়োজনমতো আরও Photo/PDF যোগ করা যাবে। Passport, Labour Card, Visa, Resident Card, Driving Licence, Contract, Insurance, Certificate এবং Other আলাদা Section হিসেবে সংরক্ষণ হবে।</div>
+<div class="grid">
+<div><label>Document Section</label><select id="docType"><option>Passport</option><option>Resident Card / ID</option><option>Visa</option><option>Labour Card</option><option>Driving Licence</option><option>Contract</option><option>Insurance</option><option>Certificate</option><option>Other</option></select></div>
+<div><label>Document Name / Number</label><input id="docName" placeholder="e.g. Passport No."></div>
+<div><label>Expiry Date</label><input id="docExpiry" type="date"></div>
+</div>
+<input id="docFile" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" multiple onchange="previewDoc(event)">
+<div class="notice">একসাথে 2/3টি বা আরও বেশি file select করতে পারবেন। একই Section-এ পরে আবার নতুন file যোগ করা যাবে।</div>
+<div id="docPreview" style="margin-top:8px"></div>
+<button class="btn" type="button" onclick="addPendingDocument()">➕ Add Files to This Section</button>
+<div id="pendingDocs" style="margin-top:8px"></div>
+</div>
+<button class="btn green" onclick="saveEmployee()">Save Employee</button><button class="btn" onclick="saveEmployee()">Save & Add Another</button>
+<button class="btn gray" onclick="clearEmployee()">New / Clear</button>
+</div>
+<div class="card"><h3>Employee List</h3><div class="muted">You can add unlimited employees. Only the complete Employee ID must be unique; ASG-316, OIC-316 and ALF-316 are separate IDs.</div><div style="overflow:auto"><table><thead><tr><th>Photo</th><th>ID</th><th>Name</th><th>Company</th><th>Designation</th><th>Department</th><th>Location</th><th>Status</th><th>Documents</th><th>Action</th></tr></thead><tbody id="empTable"></tbody></table></div></div>
+</section>
+
+<section id="monthlyAttendance" class="page">
+<div class="card"><h2>📅 Monthly Attendance — All Employees</h2>
+<div class="grid">
+<div><label>Month</label><select id="attMonth" class="month-select" onchange="renderMonthlyAttendanceGrid();updateMonthLabels()"></select><div id="attMonthText" class="muted" style="margin-top:4px"></div></div>
+<div><label>Quick Search Employee</label><input id="monthlySearch" placeholder="ID / Name / Department" oninput="filterMonthlyEmployees()"></div>
+</div>
+<div class="notice">এই মাসের জন্য সব Employee একসাথে দেখাবে। প্রতিটি Employee-এর Present, Absent, Leave, Off/Holiday এবং Overtime দিন/ঘণ্টা এখানে সরাসরি যোগ করে Save করতে পারবেন। Daily Attendance আলাদা করে লাগবে না।</div>
+<button class="btn green" onclick="loadMonthlyAttendanceGrid()">Load All Employees</button>
+<button class="btn" onclick="saveMonthlyAttendanceAll()">💾 Save Monthly Attendance</button>
+<button class="btn gray" onclick="window.print()">Print</button>
+</div>
+<div class="card">
+<div style="overflow:auto"><table id="monthlyAttendanceTable"><thead><tr><th>Employee ID</th><th>Employee Name</th><th>Department</th><th>Location</th><th>Present Days</th><th>Absent Days</th><th>Leave Days</th><th>Off/Holiday</th><th>OT Hours</th><th>Remarks</th><th>Action</th></tr></thead><tbody id="monthlyAttendanceBody"></tbody></table></div>
+</div>
+</section>
+
+<section id="locations" class="page">
+<div class="card"><h2>📍 Location Management</h2>
+<div class="notice">All Locations are listed here automatically. When an employee is moved to a new location, that location is automatically added and the employee is shown under the new location. Previous records keep their original location.</div>
+<div class="grid"><div><label>Add New Location</label><input id="newLocationName" placeholder="e.g. SUMAIL SS"></div></div>
+<button class="btn green" onclick="addLocationMaster()">Add Location</button>
+<button class="btn gray" onclick="renderLocations()">Refresh Locations</button>
+</div>
+<div class="card"><h3>All Locations & Employees</h3><div style="overflow:auto"><table><thead><tr><th>Location</th><th>Current Employees</th><th>Employee IDs</th><th>Employee Names</th><th>Action</th></tr></thead><tbody id="locationTable"></tbody></table></div></div>
+<div class="card"><h3>Location-wise Salary Details</h3><div class="notice">প্রতিটি Location-এর অধীনে Employee Name, Employee ID এবং Month অনুযায়ী Salary Details এখানে দেখা যাবে। Employee Location change করলে পুরোনো payroll-এর saved Location অনুযায়ী history থাকবে।</div><div style="overflow:auto"><table><thead><tr><th>Location</th><th>Month</th><th>Employee ID</th><th>Employee Name</th><th>Basic</th><th>Allowances</th><th>V-Power</th><th>Fuel</th><th>Filling Station</th><th>Telephone</th><th>OT</th><th>Deduction</th><th>Net Salary</th></tr></thead><tbody id="locationSalaryTable"></tbody></table></div></div>
+</section>
+
+<section id="leave" class="page">
+<div class="card"><h2>Leave Management</h2><div class="grid">
+<div><label>Employee</label><select id="lEmp" onchange="updateLeaveLocation()"></select></div>
+<div><label>Location</label><select id="lLocation"><option value="">Select Location</option></select></div>
+<div><label>Leave Type</label><select id="lType"><option>Annual</option><option>Sick</option><option>Emergency</option><option>Unpaid</option></select></div>
+<div><label>From</label><input id="lFrom" type="date"></div>
+<div><label>To</label><input id="lTo" type="date"></div>
+<div><label>Days</label><input id="lDays" type="number" step="0.5"></div>
+<div><label>Rejoin Date</label><input id="lRejoin" type="date"></div>
+<div><label>Approval Status</label><select id="lStatus"><option>Pending</option><option>Approved</option><option>Rejected</option></select></div>
+<div><label>Leave Purpose / Reason</label><input id="lReason" placeholder="Reason / purpose"></div>
+<div><label>Remarks</label><input id="lRemarks"></div>
+</div><input type="hidden" id="leaveEditIndex" value="-1"><button class="btn green" onclick="saveLeave()">Save / Update Leave</button><button class="btn gray" onclick="clearLeave()">New / Clear</button></div>
+<div class="card"><h3>Leave History</h3><div style="overflow:auto"><table><thead><tr><th>Voucher</th><th>ID</th><th>Name</th><th>Location</th><th>Type</th><th>From</th><th>To</th><th>Days</th><th>Rejoin</th><th>Status</th><th>Reason</th><th>Remarks</th><th>Action</th></tr></thead><tbody id="leaveTable"></tbody></table></div></div>
+</section>
+
+<section id="salary" class="page">
+<div class="card"><h2>Salary / Payroll</h2><div class="grid">
+<div><label>Month</label><select id="sMonth" class="month-select" onchange="updateMonthLabels();updateSalaryAttendanceSummary()"></select><div id="sMonthText" class="muted" style="margin-top:4px"></div></div>
+<div><label>Employee</label><select id="sEmp" onchange="updateSalaryAttendanceSummary()"></select></div>
+<div><label>Basic Salary</label><input id="sBasic" type="number" value="0"></div>
+<div><label>Housing</label><input id="sHousing" type="number" value="0"></div>
+<div><label>Transport</label><input id="sTransport" type="number" value="0"></div>
+<div><label>Other Allowance</label><input id="sOther" type="number" value="0"></div>
+<div><label>V-Power Incentive</label><input id="sVPower" type="number" value="0"></div>
+<div><label>Fuel Incentive</label><input id="sFuel" type="number" value="0"></div>
+<div><label>Filling Station Incentive</label><input id="sFilling" type="number" value="0"></div>
+<div><label>Telephone Allowance</label><input id="sTelephone" type="number" value="0"></div>
+<div><label>OT Amount</label><input id="sOT" type="number" value="0"></div>
+<div><label>Attendance Summary</label><div id="salaryAttSummary" class="notice" style="min-height:38px">Select employee and month</div></div>
+<div><label>Deduction</label><input id="sDed" type="number" value="0"></div>
+</div><div class="notice">Payroll is automatically saved with the employee's current Location. Historical payroll keeps its original Location.</div><button class="btn green" onclick="saveSalary()">Save Payroll</button></div>
+<div class="card"><h3>Payroll Records</h3><div style="overflow:auto"><table><thead><tr><th>Month</th><th>ID</th><th>Name</th><th>Location</th><th>Basic</th><th>Allowances</th><th>V-Power</th><th>Fuel</th><th>Filling Station</th><th>Telephone</th><th>OT</th><th>Deduction</th><th>Net</th><th>Action</th></tr></thead><tbody id="salTable"></tbody></table></div></div>
+</section>
+
+
+<section id="memos" class="page">
+<div class="card"><h2>Memo File / Employee Memo</h2>
+<div class="notice">প্রতিটি মেমোর সাথে ছবি/PDF-এর পরিবর্তে এখানে ছবিটি সরাসরি আপলোড করে সংরক্ষণ করা যাবে। ছবি ব্রাউজারের ডাটার সাথে সংরক্ষিত থাকবে।</div>
+<div class="grid">
+<div><label>Employee</label><select id="mEmp"></select></div>
+<div><label>Memo No.</label><input id="mNo" placeholder="MEMO-0001"></div>
+<div><label>Memo Date</label><input id="mDate" type="date"></div>
+<div><label>Memo Type</label><select id="mType"><option>Warning</option><option>Show Cause</option><option>Notice</option><option>Appreciation</option><option>Other</option></select></div>
+<div><label>Subject / Title</label><input id="mTitle" placeholder="Memo subject"></div>
+<div><label>Memo Image</label><input id="mImage" type="file" accept="image/*" onchange="previewMemoImage(event)"></div>
+</div>
+<div><label>Memo Details</label><textarea id="mDetails" placeholder="Write memo details here..."></textarea></div>
+<div id="memoPreview" style="margin:10px 0"></div>
+<button class="btn green" onclick="saveMemo()">Save Memo</button>
+<button class="btn gray" onclick="clearMemo()">New / Clear</button>
+</div>
+
+<div class="card"><h3>Memo History</h3>
+<div style="overflow:auto"><table><thead><tr>
+<th>Memo No.</th><th>Date</th><th>Employee</th><th>Type</th><th>Subject</th><th>Photo</th><th>Action</th>
+</tr></thead><tbody id="memoTable"></tbody></table></div>
+</div>
+
+<div class="card" id="memoPrintCard" style="display:none">
+<h2 style="text-align:center">EMPLOYEE MEMO</h2>
+<div id="memoPrintContent"></div>
+</div>
+</section>
+
+<section id="slip" class="page">
+<div class="card no-print"><h2>Salary Slip</h2><div class="grid"><div><label>Employee</label><select id="slipEmp"></select></div><div><label>Month</label><select id="slipMonth" class="month-select" onchange="updateMonthLabels()"></select><div id="slipMonthText" class="muted" style="margin-top:4px"></div></div></div><button class="btn" onclick="generateSlip()">Generate</button><button class="btn gray" onclick="window.print()">Print</button></div>
+<div id="salarySlip" class="card printable"><h2 style="text-align:center">SALARY SLIP</h2><div id="slipContent">Select employee and month, then Generate.</div></div>
+</section>
+
+<section id="qrTools" class="page">
+<div class="card">
+<h2>📷 QR Scan & Data Transfer</h2>
+<div class="notice"><b>Important:</b> Supabase/Cloud নেই। QR দিয়ে ছোট transfer করা যাবে। Photo/Documents সহ বড় database-এর জন্য <b>Backup Data → অন্য ফোনে Restore Data</b> ব্যবহার করুন।</div>
+<div class="grid">
+  <div class="card">
+    <h3>👤 Employee QR</h3>
+    <label>Employee</label><select id="qrEmp"></select>
+    <button class="btn" onclick="generateEmployeeQR()">Generate Employee QR</button>
+    <div id="employeeQrBox" style="margin-top:12px;text-align:center"></div>
+  </div>
+  <div class="card">
+    <h3>🔄 Small Data Transfer QR</h3>
+    <button class="btn green" onclick="generateTransferQR()">Generate Transfer QR</button>
+    <div id="transferQrBox" style="margin-top:12px;text-align:center"></div>
+    <div id="transferQrStatus" class="muted" style="margin-top:8px"></div>
+  </div>
+</div>
+<div class="card">
+<h3>📷 Scan QR</h3>
+<div id="qrReader" style="width:min(520px,100%);margin:auto"></div>
+<div style="text-align:center;margin-top:10px"><button class="btn" onclick="startQRScanner()">▶ Start Camera Scanner</button><button class="btn gray" onclick="stopQRScanner()">■ Stop</button></div>
+<div id="qrScanStatus" class="notice" style="margin-top:10px">Camera scanner is stopped.</div>
+</div>
+<div class="card">
+<h3>💾 Full Database Transfer</h3>
+<p>Employee photos, multiple documents, salary, attendance, leave, memo—সবসহ সম্পূর্ণ data নিতে:</p>
+<button class="btn" onclick="backup()">⬇ Export Full Backup</button>
+<button class="btn gray" onclick="document.getElementById('restore').click()">⬆ Import Full Backup</button>
+</div>
+</div>
+</section>
+
+<section id="salesHistory" class="page">
+<div class="card"><h2>🧾 Employee Sales History</h2>
+<div class="notice">Cash Management থেকে Cloud-এ Sync হওয়া বিক্রির তথ্য এখানে Employee ID অনুযায়ী দেখাবে। এই সেকশনটি Employee 360° Profile থেকে সম্পূর্ণ আলাদা।</div>
+<div class="grid"><div><label>Select Employee (Employee ID - Name)</label><select id="salesHistoryId" onchange="renderEmployeeSalesHistory()"><option value="">-- Select Employee --</option></select></div><div><label>Month</label><input id="salesHistoryMonth" type="month" onchange="renderEmployeeSalesHistory()"></div></div>
+<div id="salesHistoryStatus" class="notice">Cloud sales history not loaded yet.</div><div id="salesHistorySummary"></div>
+<div style="overflow:auto"><table><thead><tr><th>Invoice</th><th>Date</th><th>Employee ID</th><th>Salesman</th><th>Customer</th><th>Items</th><th>Total</th><th>Paid</th><th>Due</th></tr></thead><tbody id="employeeSalesRows"></tbody></table></div>
+<button class="btn green no-print" onclick="printEmployeeSalesHistory()">🖨 Print / Save PDF</button></div></section>
+
+<section id="reports" class="page">
+<div class="card"><h2>Reports</h2><button class="btn" onclick="renderReports()">Refresh Report</button><button class="btn gray" onclick="window.print()">Print</button><div id="reportContent"></div></div>
+</section>
+
+</main></div>
+</div>
+
+
+<div id="imageLightbox" onclick="closeMemoImage(event)">
+  <span id="lightboxClose" onclick="closeMemoImage(event)">&times;</span>
+  <img id="lightboxImg" src="" alt="Memo Image" onclick="event.stopPropagation()">
+</div>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+<script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+// ================= OFFLINE / QR MODE — NO SUPABASE =================
+let db={employees:[],attendance:[],monthlyAttendance:[],leave:[],salary:[],memos:[],locations:[]};
+let employeePhotoData='', pendingDocs=[], selectedDocFiles=[];
+let qrScanner=null;
+function emptyDb(){return {employees:[],attendance:[],monthlyAttendance:[],leave:[],salary:[],memos:[],locations:[]};}
+function setSyncState(state,msg){const el=document.getElementById('syncState');if(el)el.textContent=msg||state;}
+function loadDbIntoMemory(x){
+ db=x&&typeof x==='object'?x:emptyDb();
+ db.employees=Array.isArray(db.employees)?db.employees:[];
+ db.attendance=Array.isArray(db.attendance)?db.attendance:[];
+ db.monthlyAttendance=Array.isArray(db.monthlyAttendance)?db.monthlyAttendance:[];
+ db.leave=Array.isArray(db.leave)?db.leave:[];
+ db.salary=Array.isArray(db.salary)?db.salary:[];
+ db.memos=Array.isArray(db.memos)?db.memos:[];
+ db.locations=Array.isArray(db.locations)?db.locations:[];
+ db.employees.forEach(e=>{
+   e.documents=Array.isArray(e.documents)?e.documents:[];
+   e.documents=e.documents.filter(d=>d&&typeof d==='object').map((d,i)=>({docId:d.docId||('DOC-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,8)+'-'+i),type:d.type||'Other',name:d.name||d.fileName||d.type||'Document',expiry:d.expiry||'',file:d.file||d.data||'',fileName:d.fileName||d.name||('Document-'+(i+1)),mime:d.mime||''}));
+ });
+}
+function sessionSave(){try{localStorage.setItem('HR_SHARED_LOCAL_CACHE',JSON.stringify(db));}catch(e){console.error(e);alert('Storage limit reached. Use Backup Data regularly.');}}
+function loadLocal(){try{const x=JSON.parse(localStorage.getItem('HR_SHARED_LOCAL_CACHE')||'null');if(x)loadDbIntoMemory(x);}catch(e){console.error(e);}}
+function startApp(){loadLocal();normalizeDb();refresh();clearEmployee();clearMemo();setSyncState('ok','📱 Offline / Local');}
+function persist(){syncLocationMaster();sessionSave();refresh();setSyncState('ok','📱 Saved on this phone');}
+function backup(){let blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='HR_Backup_'+new Date().toISOString().slice(0,10)+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);}
+function restore(ev){let f=ev.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{let x=JSON.parse(r.result);if(!x.employees||!x.attendance||!x.leave||!x.salary)throw 0;if(!x.memos)x.memos=[];if(!x.monthlyAttendance)x.monthlyAttendance=[];if(!x.locations)x.locations=[];loadDbIntoMemory(x);syncLocationMaster();persist();alert('✅ Full HR data restored successfully.');show('dashboard');}catch(e){alert('❌ Invalid backup file.');}};r.readAsText(f);ev.target.value='';}
+
+function fillQRSelect(){const s=document.getElementById('qrEmp');if(!s)return;const old=s.value;s.innerHTML='<option value="">-- Select Employee --</option>'+db.employees.map(e=>`<option value="${esc(e.id)}">${esc(e.id)} - ${esc(e.name)}</option>`).join('');if([...s.options].some(o=>o.value===old))s.value=old;}
+function makeQR(box,text,size=240){const el=document.getElementById(box);if(!el)return;el.innerHTML='';if(!window.QRCode){el.innerHTML='<div class="notice">QR library not loaded. Please open the GitHub link with internet once.</div>';return;}new QRCode(el,{text,width:size,height:size,correctLevel:QRCode.CorrectLevel.M});}
+function generateEmployeeQR(){const id=val('qrEmp');if(!id)return alert('Select an employee first.');const e=employee(id);const payload='HR_EMP:'+btoa(unescape(encodeURIComponent(JSON.stringify({id:e.id,name:e.name||''}))));makeQR('employeeQrBox',payload,240);document.getElementById('employeeQrBox').insertAdjacentHTML('beforeend',`<div style="margin-top:8px"><b>${esc(e.id)} - ${esc(e.name)}</b></div>`);}
+function safeB64(s){return btoa(unescape(encodeURIComponent(s))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');}
+function decodeB64(s){s=s.replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='=';return decodeURIComponent(escape(atob(s)));}
+function generateTransferQR(){
+ const raw=JSON.stringify(db);
+ const enc='HR_DATA:'+safeB64(raw);
+ const status=document.getElementById('transferQrStatus');
+ if(enc.length>2500){document.getElementById('transferQrBox').innerHTML='';if(status)status.innerHTML='⚠️ Data is too large for one QR code ('+Math.round(enc.length/1024)+' KB). Use <b>Export Full Backup</b> instead; it includes photos/documents.';return;}
+ makeQR('transferQrBox',enc,280);if(status)status.textContent='Scan this QR on the other phone to import the current data. No cloud is used.';
+}
+async function generateEmployeePDF(forceId){
+  try{
+    const id=(forceId||val('profileId')||'').trim();
+    if(!id)return alert('Select an Employee first.');
+    const e=employee(id);
+    if(!e)return alert('Employee not found.');
+    loadEmployeeProfile();
+    await new Promise(r=>setTimeout(r,350));
+    if(!window.jspdf || !window.html2canvas){alert('PDF library is still loading. Please wait a moment and try again.');return;}
+    const source=document.getElementById('profileDetails');
+    if(!source || !source.innerHTML.trim())return alert('Employee details are not available.');
+    const clone=source.cloneNode(true);
+    clone.querySelectorAll('.no-print,button').forEach(x=>x.remove());
+    clone.style.cssText='position:fixed;left:-10000px;top:0;width:900px;background:#fff;color:#111;padding:24px;font-family:Arial,sans-serif;font-size:12px;box-sizing:border-box;';
+    const title=document.createElement('div');
+    title.innerHTML='<h1 style="text-align:center;margin:0 0 6px">EMPLOYEE 360° PROFILE</h1><div style="text-align:center;margin-bottom:18px">'+esc(e.id)+' — '+esc(e.name||'')+'</div>';
+    clone.insertBefore(title,clone.firstChild);
+    document.body.appendChild(clone);
+    const canvas=await html2canvas(clone,{scale:1.6,useCORS:true,backgroundColor:'#fff',logging:false,windowWidth:900});
+    document.body.removeChild(clone);
+    const {jsPDF}=window.jspdf;
+    const pdf=new jsPDF('p','mm','a4');
+    const pageW=210,pageH=297,margin=10;
+    const imgW=pageW-margin*2;
+    const imgH=canvas.height*imgW/canvas.width;
+    const img=canvas.toDataURL('image/jpeg',0.88);
+    let remaining=imgH, y=margin;
+    pdf.addImage(img,'JPEG',margin,y,imgW,imgH);
+    remaining-=pageH-margin*2;
+    while(remaining>0){
+      pdf.addPage();
+      y=margin-(imgH-remaining);
+      pdf.addImage(img,'JPEG',margin,y,imgW,imgH);
+      remaining-=pageH-margin*2;
+    }
+    const safe=(e.id||'Employee').replace(/[^a-z0-9_-]+/gi,'_');
+    pdf.save('Employee_360_'+safe+'.pdf');
+    const st=document.getElementById('qrScanStatus');
+    if(st)st.textContent='✅ Full Employee PDF created: '+e.id;
+  }catch(err){
+    console.error(err);
+    alert('PDF তৈরি করা যায়নি। আবার চেষ্টা করুন।');
+  }
+}
+
+function handleQRResult(text){
+ try{
+   if(text.startsWith('HR_EMP:')){const obj=JSON.parse(decodeB64(text.slice(7)));const e=employee(obj.id);if(e&&e.id){const p=document.getElementById('profileId');if(p)p.value=e.id;show('profile');loadEmployeeProfile();document.getElementById('qrScanStatus').textContent='✅ Employee QR opened: '+e.id+' — preparing full PDF...';setTimeout(()=>generateEmployeePDF(e.id),900);}else document.getElementById('qrScanStatus').textContent='Employee '+obj.id+' is not stored on this phone.';return;}
+   if(text.startsWith('HR_DATA:')){const x=JSON.parse(decodeB64(text.slice(7)));if(!x||!x.employees)throw 0;loadDbIntoMemory(x);syncLocationMaster();persist();document.getElementById('qrScanStatus').textContent='✅ HR data imported successfully.';alert('✅ QR data imported successfully.');show('dashboard');return;}
+   document.getElementById('qrScanStatus').textContent='QR detected, but this is not an HR QR code.';
+ }catch(e){console.error(e);document.getElementById('qrScanStatus').textContent='❌ Invalid HR QR data.';}
+}
+async function startQRScanner(){
+ if(!window.Html5Qrcode){alert('QR scanner library not loaded. Please open the GitHub link with internet.');return;}
+ stopQRScanner();
+ qrScanner=new Html5Qrcode('qrReader');
+ const cfg={fps:10,qrbox:{width:250,height:250},aspectRatio:1};
+ try{await qrScanner.start({facingMode:'environment'},cfg,(decoded)=>handleQRResult(decoded),()=>{});document.getElementById('qrScanStatus').textContent='📷 Camera scanner is running. Point the camera at an HR QR code.';}catch(e){document.getElementById('qrScanStatus').textContent='❌ Camera could not start. Check browser camera permission and use HTTPS/GitHub Pages.';console.error(e);}
+}
+async function stopQRScanner(){if(qrScanner){try{await qrScanner.stop();}catch(e){}try{qrScanner.clear();}catch(e){}qrScanner=null;}}
+
+const KEY='HR_HTML_SYSTEM_V1';
+// db is stored locally on this device.
+db.locations=Array.isArray(db.locations)?db.locations:[];
+db.monthlyAttendance=db.monthlyAttendance||[];
+if(!db.memos) db.memos=[];
+db.employees.forEach(e=>{ if(!Array.isArray(e.locationHistory)){ e.locationHistory=e.location?[{location:e.location,from:e.join||'',to:''}]:[]; } });
+function syncLocationMaster(){
+  const names=new Set((db.locations||[]).map(x=>String(x).trim()).filter(Boolean));
+  db.employees.forEach(e=>{ if(e.location) names.add(String(e.location).trim()); (e.locationHistory||[]).forEach(h=>{if(h.location)names.add(String(h.location).trim())}); });
+  ['monthlyAttendance','leave','salary','memos','attendance'].forEach(k=>(db[k]||[]).forEach(r=>{if(r.location)names.add(String(r.location).trim())}));
+  db.locations=[...names].sort((a,b)=>a.localeCompare(b));
+}
+syncLocationMaster();
+function repairMonthlyAndSalary(){ const ma=new Map(); (db.monthlyAttendance||[]).forEach(r=>{if(r&&r.month&&r.id)ma.set(String(r.month)+'|'+employeeKey(r.id),r);}); db.monthlyAttendance=[...ma.values()]; const sal=new Map(); (db.salary||[]).forEach(r=>{if(r&&r.month&&r.id)sal.set(String(r.month)+'|'+employeeKey(r.id),r);}); db.salary=[...sal.values()]; } repairMonthlyAndSalary();
+function persist(){syncLocationMaster();sessionSave();refresh();setSyncState('ok','📱 Saved on this phone');}
+function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+function populateMonthSelectors(){
+  const ids=['attMonth','sMonth','slipMonth'];
+  const now=new Date(), current=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+  ids.forEach(id=>{
+    const el=document.getElementById(id); if(!el)return;
+    const old=(el.value||current);
+    el.innerHTML='<option value=\"\">-- Select Month --</option>';
+    for(let y=2020;y<=2035;y++){
+      for(let m=1;m<=12;m++){
+        const v=y+'-'+String(m).padStart(2,'0');
+        const o=document.createElement('option');
+        o.value=v; o.textContent=formatMonthEn(v);
+        if(v===old)o.selected=true;
+        el.appendChild(o);
+      }
+    }
+    el.value=(old && el.querySelector('option[value=\"'+old+'\"]'))?old:current;
+  });
+  updateMonthLabels();
+}
+
+function updateMonthLabels(){
+  const pairs=[['attMonth','attMonthText'],['sMonth','sMonthText'],['slipMonth','slipMonthText']];
+  pairs.forEach(([a,b])=>{const x=document.getElementById(a),t=document.getElementById(b);if(x&&t)t.textContent=formatMonthEn(x.value);});
+}
+
+function show(id){document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));document.getElementById(id).classList.add('active');if(id==='monthlyAttendance'){if(!val('attMonth'))populateMonthSelectors();updateMonthLabels();renderMonthlyAttendanceGrid();}refresh();}
+function nextId(){let n=db.employees.reduce((m,e)=>Math.max(m,parseInt((e.id||'').replace(/\D/g,''))||0),0)+1;return 'EMP-'+String(n).padStart(4,'0');}
+function normalizeEmployeeId(id){return String(id??'').trim().toUpperCase().replace(/\s+/g,'');}
+function employeeKey(id){return normalizeEmployeeId(id);}
+function employee(id){const q=employeeKey(id);return db.employees.find(e=>employeeKey(e.id)===q)||{};}
+// Only the COMPLETE Employee ID is unique. The numeric part alone is NEVER used.
+// Therefore ASG-316, OIC-316 and ALF-316 are three separate employees.
+function employeeIdExists(id,ignoreIndex=-1){const q=employeeKey(id);return db.employees.some((e,i)=>i!==ignoreIndex && employeeKey(e.id)===q);}
+function fillSelect(id){let s=document.getElementById(id);if(!s)return;let old=s.value;s.innerHTML='<option value="">-- Select Employee --</option>'+db.employees.map(e=>`<option value="${esc(e.id)}">${esc(e.id)} - ${esc(e.name)}</option>`).join('');if([...s.options].some(o=>o.value===old))s.value=old;}
+function refresh(){
+document.getElementById('dEmp').textContent=db.employees.length;
+document.getElementById('dActive').textContent=db.employees.filter(e=>e.status==='Active').length;
+document.getElementById('dAtt').textContent=(db.monthlyAttendance||[]).length;
+document.getElementById('dLeave').textContent=db.leave.length;
+['lEmp','sEmp','slipEmp','mEmp','profileEmp','salesHistoryId'].forEach(fillSelect);
+renderEmployees();renderLeave();renderSalary();renderMemos();renderReports();renderLocations();populateLocationOptions();fillQRSelect(); populateMonthSelectors(); updateMonthLabels(); updateSalaryAttendanceSummary(); if(document.getElementById('lEmp')) updateLeaveLocation();
+}
+function clearEmployee(){
+ document.getElementById('editIndex').value=-1;document.getElementById('editOriginalId').value='';
+ document.querySelectorAll('#employees input').forEach(i=>{if(!['eId','ePhoto','docFile'].includes(i.id))i.value=''});
+ document.getElementById('eId').value=nextId();document.getElementById('eGender').value='Male';document.getElementById('eStatus').value='Active';
+ document.getElementById('eLocationDate').value=new Date().toISOString().slice(0,10);
+ employeePhotoData='';pendingDocs=[];selectedDocFiles=[];
+ ['photoPreview','docPreview','pendingDocs'].forEach(id=>{const x=document.getElementById(id);if(x)x.innerHTML=''});
+ const f=document.getElementById('docFile');if(f)f.value='';
+}
+function readAsData(file,cb){const r=new FileReader();r.onload=()=>cb(r.result);r.onerror=()=>alert('File could not be read.');r.readAsDataURL(file)}
+function readEmployeePhoto(ev){
+ const f=ev.target.files[0];if(!f)return;
+ if(!/^image\/(jpeg|png|webp)$/.test(f.type))return alert('Use JPG, PNG or WebP.');
+ if(f.size>10*1024*1024)return alert('Employee photo must be under 10 MB.');
+ readAsData(f,data=>{const img=new Image();img.onload=()=>{const max=800,w=img.naturalWidth,h=img.naturalHeight,sc=Math.min(1,max/Math.max(w,h));const c=document.createElement('canvas');c.width=Math.max(1,Math.round(w*sc));c.height=Math.max(1,Math.round(h*sc));c.getContext('2d').drawImage(img,0,0,c.width,c.height);employeePhotoData=c.toDataURL('image/jpeg',.82);document.getElementById('photoPreview').innerHTML=`<img src="${employeePhotoData}" style="width:150px;height:150px;object-fit:cover;border-radius:8px;cursor:pointer" onclick="openMemoImage('${employeePhotoData.replace(/'/g,"\\'")}')">`};img.src=data})
+}
+function previewDoc(ev){
+ const files=[...ev.target.files];if(!files.length)return;selectedDocFiles=[];
+ const bad=files.find(f=>!['application/pdf','image/jpeg','image/png','image/webp'].includes(f.type));if(bad){ev.target.value='';return alert('Use JPG, PNG, WebP or PDF only.')}
+ const big=files.find(f=>f.size>12*1024*1024);if(big){ev.target.value='';return alert('Each document must be under 12 MB.')}
+ let left=files.length;files.forEach(f=>readAsData(f,data=>{selectedDocFiles.push({file:f,data});if(--left===0)renderSelectedDocFiles()}))
+}
+function renderSelectedDocFiles(){
+ const box=document.getElementById('docPreview');if(!box)return;
+ box.innerHTML=selectedDocFiles.map((x,i)=>x.file.type==='application/pdf'
+ ? `<div class="notice">📄 ${esc(x.file.name)} <button class="btn red" onclick="selectedDocFiles.splice(${i},1);renderSelectedDocFiles()">Remove</button></div>`
+ : `<span style="display:inline-block;margin:5px;text-align:center"><img src="${x.data}" style="width:100px;height:75px;object-fit:cover;border-radius:5px;cursor:pointer" onclick="openMemoImage('${x.data.replace(/'/g,"\\'")}')"><br><small>${esc(x.file.name)}</small> <button class="btn red" onclick="selectedDocFiles.splice(${i},1);renderSelectedDocFiles()">×</button></span>`).join('')
+}
+function addPendingDocument(){
+ if(!selectedDocFiles.length)return alert('Select one or more photos/files first.');
+ const type=val('docType'),name=val('docName')||type,expiry=val('docExpiry');
+ selectedDocFiles.forEach(x=>pendingDocs.push({docId:'DOC-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,10),type,name,expiry,file:x.data,fileName:x.file.name,mime:x.file.type}));
+ selectedDocFiles=[];document.getElementById('docFile').value='';document.getElementById('docPreview').innerHTML='';document.getElementById('docName').value='';document.getElementById('docExpiry').value='';renderPendingDocs()
+}
+function documentPreviewHtml(d, context, index){
+ const isImg=String(d.file||'').startsWith('data:image');
+ const label=esc(d.fileName||d.name||'Document');
+ const meta=(d.name&&d.name!==(d.fileName||''))?`<small>${esc(d.name)}</small><br>`:'';
+ return `<div class="doc-item" style="display:inline-flex;vertical-align:top;flex-direction:column;align-items:center;width:150px;margin:6px;padding:8px;border:1px solid #dce2e8;border-radius:8px;background:#fff">
+   ${isImg?`<img src="${esc(d.file||'')}" style="width:125px;height:95px;object-fit:cover;border-radius:6px;cursor:pointer" onclick="viewDocument(${JSON.stringify(context)},${index})">`:`<button class="btn" type="button" onclick="viewDocument(${JSON.stringify(context)},${index})">📄 Open PDF</button>`}
+   ${meta}<small style="max-width:130px;word-break:break-word">${label}</small>
+   ${d.expiry?`<small>Expiry: ${esc(d.expiry)}</small>`:''}
+   ${context==='pending'?`<button class="btn red" type="button" onclick="removePendingDocument(${index})">Delete</button>`:''}
+   ${context==='existing'?`<button class="btn red" type="button" onclick="deleteEmployeeDocument(${index})">Delete</button>`:''}
+ </div>`;
+}
+function viewDocument(context,index){
+ let d=null;
+ if(context==='pending') d=pendingDocs[index];
+ else if(context==='existing'){
+   const ix=+document.getElementById('editIndex').value;
+   if(ix>=0&&db.employees[ix]) d=(db.employees[ix].documents||[])[index];
+ }
+ else if(context && typeof context==='object' && context.file) d=context;
+ if(!d||!d.file)return alert('Document file is not available.');
+ if(String(d.file).startsWith('data:image')){openMemoImage(d.file);return;}
+ openDocumentFile(d.file,d.fileName||d.name||'Document');
+}
+function removePendingDocument(i){if(i<0||i>=pendingDocs.length)return;pendingDocs.splice(i,1);renderPendingDocs();}
+function renderPendingDocs(){
+ const box=document.getElementById('pendingDocs');if(!box)return;
+ const groups={};pendingDocs.forEach((d,i)=>(groups[d.type||'Other']??=[]).push({...d,i}));
+ box.innerHTML=Object.entries(groups).map(([type,arr])=>`<div class="card" style="box-shadow:none;border:1px solid #dce2e8"><h4>📁 ${esc(type)} — ${arr.length} file(s)</h4><div style="display:flex;flex-wrap:wrap">${arr.map(d=>documentPreviewHtml(d,'pending',d.i)).join('')}</div></div>`).join('');
+}
+function openDocumentFile(data,name){if(!data)return alert('Document file is not available.');const w=window.open();if(!w)return alert('Allow popups to view the document.');w.document.write(data.startsWith('data:application/pdf')?`<title>${esc(name)}</title><iframe src="${data}" style="width:100%;height:100vh;border:0"></iframe>`:`<img src="${data}" style="max-width:100%">`)}
+function saveEmployee(){
+ const name=document.getElementById('eName').value.trim();if(!name)return alert('Full Name is required.');
+ const originalId=(document.getElementById('editOriginalId')?.value||'').trim(),enteredId=document.getElementById('eId').value.trim(),id=enteredId||nextId();if(!id)return alert('Employee ID is required.');
+ let existingIdx=-1;if(originalId)existingIdx=db.employees.findIndex(x=>employeeKey(x.id)===employeeKey(originalId));
+ if(employeeIdExists(id,existingIdx))return alert('This complete Employee ID already exists. Use a different ID.');
+ const old=existingIdx>=0?db.employees[existingIdx]:{},newLocation=val('eLocation').trim();
+ const existingDocs=(Array.isArray(old.documents)?old.documents:[]).map(d=>({...d}));
+ const newDocs=pendingDocs.map(d=>({...d}));
+ const data={id,name,visa:val('eVisa'),division:val('eDivision'),designation:val('eDesignation'),department:val('eDepartment'),category:val('eCategory'),grade:val('eGrade'),nationality:val('eNationality'),gender:val('eGender'),dob:val('eDob'),join:val('eJoin'),location:newLocation,status:val('eStatus'),phone:val('ePhone'),email:val('eEmail'),photo:employeePhotoData||old.photo||'',documents:existingDocs.concat(newDocs)};
+ if(existingIdx<0){data.locationHistory=newLocation?[{location:newLocation,from:val('eJoin')||new Date().toISOString().slice(0,10),to:''}]:[];db.employees.push(data)}
+ else{
+  const oldLocation=(old.location||'').trim(),history=Array.isArray(old.locationHistory)?old.locationHistory.slice():[];
+  if(newLocation!==oldLocation){const changeDate=val('eLocationDate')||new Date().toISOString().slice(0,10);if(oldLocation)['monthlyAttendance','leave','salary','memos','attendance'].forEach(k=>(db[k]||[]).forEach(r=>{if(r.id===old.id&&!r.location)r.location=oldLocation;}));const last=history[history.length-1];if(last&&last.location===oldLocation&&!last.to)last.to=changeDate;if(newLocation)history.push({location:newLocation,from:changeDate,to:''})}
+  data.locationHistory=history;db.employees[existingIdx]=data
+ }
+ try{persist();clearEmployee();alert('Employee saved successfully. Total Employees: '+db.employees.length)}catch(err){console.error(err);sessionSave();refresh();alert('Employee saved locally. Cloud sync will retry automatically.')}
+}
+function val(id){return document.getElementById(id).value}
+function editEmployee(i){
+ let e=db.employees[i];if(!e)return;document.getElementById('editIndex').value=i;document.getElementById('editOriginalId').value=e.id||'';
+ for(let [id,k] of [['eId','id'],['eName','name'],['eVisa','visa'],['eDivision','division'],['eDesignation','designation'],['eDepartment','department'],['eCategory','category'],['eGrade','grade'],['eNationality','nationality'],['eGender','gender'],['eDob','dob'],['eJoin','join'],['eLocation','location'],['eStatus','status'],['ePhone','phone'],['eEmail','email']])document.getElementById(id).value=e[k]||'';
+ document.getElementById('eLocationDate').value=new Date().toISOString().slice(0,10);employeePhotoData=e.photo||'';pendingDocs=[];
+ document.getElementById('photoPreview').innerHTML=employeePhotoData?`<img src="${employeePhotoData}" style="width:150px;height:150px;object-fit:cover;border-radius:8px;cursor:pointer" onclick="openMemoImage('${employeePhotoData.replace(/'/g,"\\'")}')">`:'';
+ renderExistingEmployeeDocs(e);show('employees');
+}
+function renderExistingEmployeeDocs(e){
+ const docs=e&&Array.isArray(e.documents)?e.documents:[],groups={};
+ docs.forEach((d,i)=>(groups[d.type||'Other']??=[]).push({...d,i}));
+ const box=document.getElementById('pendingDocs');if(!box)return;
+ box.innerHTML=Object.entries(groups).map(([type,arr])=>`<div class="card" style="box-shadow:none;border:1px solid #dce2e8"><h4>📁 ${esc(type)} — ${arr.length} file(s)</h4><div style="display:flex;flex-wrap:wrap">${arr.map(d=>documentPreviewHtml(d,'existing',d.i)).join('')}</div></div>`).join('')||'<div class="notice">No documents uploaded.</div>';
+}
+function deleteEmployeeDocument(i){
+ const ix=+document.getElementById('editIndex').value;if(ix<0)return;if(!confirm('Delete this document?'))return;
+ db.employees[ix].documents.splice(i,1);persist();renderExistingEmployeeDocs(db.employees[ix]);alert('Document deleted.')
+}
+function changeEmployeeLocation(i){
+  const e=db.employees[i];
+  if(!e)return;
+  const oldLocation=(e.location||'').trim();
+  const newLocation=(prompt('New Location for '+e.id+' ('+e.name+'):',oldLocation)||'').trim();
+  if(!newLocation || newLocation===oldLocation)return;
+  const changeDate=prompt('Effective date (YYYY-MM-DD):',new Date().toISOString().slice(0,10));
+  if(!changeDate)return;
+  if(!Array.isArray(e.locationHistory))e.locationHistory=[];
+  if(oldLocation){
+    ['monthlyAttendance','leave','salary','memos','attendance'].forEach(k=>{(db[k]||[]).forEach(r=>{if(r.id===e.id&&!r.location)r.location=oldLocation;});});
+    let last=e.locationHistory[e.locationHistory.length-1];
+    if(last&&last.location===oldLocation&&!last.to)last.to=changeDate;
+  }
+  e.location=newLocation;
+  e.locationHistory.push({location:newLocation,from:changeDate,to:''});
+  persist();renderEmployees();
+  if(document.getElementById('profileId')&&document.getElementById('profileId').value===e.id)loadEmployeeProfile();
+  alert('Location changed successfully. Previous location records remain saved under '+(oldLocation||'the previous location')+'.');
+}
+function del(arr,i){if(confirm('Delete this record?')){arr.splice(i,1);persist()}}
+function populateLocationOptions(){
+  const dl=document.getElementById('locationOptions'); if(!dl)return;
+  syncLocationMaster();
+  dl.innerHTML=(db.locations||[]).map(x=>`<option value="${esc(x)}"></option>`).join('');
+}
+function addLocationMaster(){
+  const name=val('newLocationName').trim();
+  if(!name)return alert('Please enter a location name.');
+  syncLocationMaster();
+  if(db.locations.some(x=>x.toLowerCase()===name.toLowerCase()))return alert('This location already exists.');
+  db.locations.push(name); db.locations.sort((a,b)=>a.localeCompare(b));
+  localStorage.setItem(KEY,JSON.stringify(db));
+  document.getElementById('newLocationName').value='';
+  refresh();
+  alert('Location added successfully.');
+}
+function renderLocations(){
+  const t=document.getElementById('locationTable'); if(!t)return;
+  syncLocationMaster();
+  const locs=db.locations||[];
+  t.innerHTML=locs.map((loc,i)=>{
+    const emps=db.employees.filter(e=>(e.location||'').trim().toLowerCase()===loc.toLowerCase());
+    return `<tr><td><b>${esc(loc)}</b></td><td>${emps.length}</td><td>${emps.map(e=>esc(e.id)).join('<br>')||'<span class="muted">No current employee</span>'}</td><td>${emps.map(e=>esc(e.name)).join('<br>')||'<span class="muted">-</span>'}</td><td><button class="btn" onclick="showLocationEmployees('${esc(loc).replace(/'/g,"\'")}')">View Employees</button></td></tr>`;
+  }).join('')||'<tr><td colspan="5">No locations found. Add a location or add an employee with a location.</td></tr>';
+  renderLocationSalaryDetails();
+}
+function renderLocationSalaryDetails(){
+  const t=document.getElementById('locationSalaryTable'); if(!t)return;
+  const rows=(db.salary||[]).filter(s=>s && s.id && (s.location||employee(s.id).location));
+  const sorted=rows.slice().sort((a,b)=>String(a.location||'').localeCompare(String(b.location||'')) || String(b.month||'').localeCompare(String(a.month||'')) || String(a.id||'').localeCompare(String(b.id||'')));
+  t.innerHTML=sorted.map(s=>{
+    const e=employee(s.id)||{};
+    const allowances=(+s.housing||0)+(+s.transport||0)+(+s.other||0);
+    return `<tr><td>${esc(s.location||e.location||'')}</td><td>${esc(formatMonthEn(s.month))}</td><td>${esc(s.id)}</td><td>${esc(e.name||'')}</td><td>${(+s.basic||0).toFixed(2)}</td><td>${allowances.toFixed(2)}</td><td>${(+s.vpower||0).toFixed(2)}</td><td>${(+s.fuel||0).toFixed(2)}</td><td>${(+s.filling||0).toFixed(2)}</td><td>${(+s.telephone||0).toFixed(2)}</td><td>${(+s.ot||0).toFixed(2)}</td><td>${(+s.ded||0).toFixed(2)}</td><td><b>${(+s.net||0).toFixed(2)}</b></td></tr>`;
+  }).join('')||'<tr><td colspan="13">No salary records found.</td></tr>';
+}
+function showLocationEmployees(loc){
+  const emps=db.employees.filter(e=>(e.location||'').trim().toLowerCase()===String(loc).trim().toLowerCase());
+  if(!emps.length)return alert(loc+' has no current employees.');
+  alert(loc+'\n\n'+emps.map(e=>e.id+' - '+e.name).join('\n'));
+}
+function renderEmployees(){
+ let t=document.getElementById('empTable');if(!t)return;
+ t.innerHTML=db.employees.map((e,i)=>`<tr><td>${e.photo?`<img class="memo-thumb" src="${e.photo}" style="width:48px;height:48px;object-fit:cover;border-radius:6px;cursor:pointer" onclick="openMemoImage('${e.photo.replace(/'/g,"\\'")}')">`:'No Photo'}</td><td>${esc(e.id)}</td><td>${esc(e.name)}</td><td>${esc(e.visa)}</td><td>${esc(e.designation)}</td><td>${esc(e.department)}</td><td>${esc(e.location||'')}</td><td>${esc(e.status)}</td><td>${(e.documents||[]).length}</td><td><button class="btn" onclick="open360Profile('${e.id.replace(/'/g,"\\'")}')">360°</button><button class="btn" onclick="editEmployee(${i})">Edit</button><button class="btn" onclick="changeEmployeeLocation(${i})">Change Location</button><button class="btn red" onclick="del(db.employees,${i})">Delete</button></td></tr>`).join('')
+}
+function open360Profile(id){document.getElementById('profileId').value=id;show('dashboard');loadEmployeeProfile();}
+function formatMonthEn(m){
+  if(!m)return '';
+  const parts=String(m).split('-');
+  if(parts.length<2)return m;
+  const months=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const n=parseInt(parts[1],10);
+  return (months[n-1]||parts[1])+' - '+parts[0];
+}
+
+function monthlyRecord(month,id){ const q=employeeKey(id); return (db.monthlyAttendance||[]).find(x=>String(x.month)===String(month) && employeeKey(x.id)===q); }
+function salaryRecord(month,id){ const q=employeeKey(id); return (db.salary||[]).find(x=>String(x.month)===String(month) && employeeKey(x.id)===q); }
+
+function loadMonthlyAttendanceGrid(){
+  const month=val('attMonth');
+  if(!month)return alert('Please select a month.');
+  if(!db.monthlyAttendance)db.monthlyAttendance=[];
+  renderMonthlyAttendanceGrid();
+}
+function renderMonthlyAttendanceGrid(){
+  const month=val('attMonth'), body=document.getElementById('monthlyAttendanceBody');
+  if(!body||!month)return;
+  const q=(val('monthlySearch')||'').toLowerCase();
+  const emps=db.employees.filter(e=>!q || [e.id,e.name,e.department].join(' ').toLowerCase().includes(q));
+  body.innerHTML=emps.map((e,i)=>{
+    const r=monthlyRecord(month,e.id)||{};
+    return `<tr data-monthly-row data-name="${esc((e.id+' '+e.name+' '+(e.department||'')).toLowerCase())}">
+      <td><b>${esc(e.id)}</b><input type="hidden" class="m-id" value="${esc(e.id)}"></td>
+      <td>${esc(e.name)}</td><td>${esc(e.department||'')}</td><td>${esc(r.location||e.location||'')}</td>
+      <td><input class="m-present" type="number" min="0" step="1" value="${r.present??0}" style="width:90px"></td>
+      <td><input class="m-absent" type="number" min="0" step="1" value="${r.absent??0}" style="width:90px"></td>
+      <td><input class="m-leave" type="number" min="0" step="1" value="${r.leave??0}" style="width:90px"></td>
+      <td><input class="m-off" type="number" min="0" step="1" value="${r.off??0}" style="width:90px"></td>
+      <td><input class="m-ot" type="number" min="0" step="0.5" value="${r.ot??0}" style="width:90px"></td>
+      <td><input class="m-remarks" value="${esc(r.remarks||'')}" placeholder="Remarks"></td>
+      <td>${r.id?`<button class="btn red" onclick="deleteMonthlyAttendance('${esc(month)}','${esc(e.id)}')">Delete</button>`:`<span class="muted">New</span>`}</td>
+    </tr>`;
+  }).join('');
+}
+function filterMonthlyEmployees(){renderMonthlyAttendanceGrid()}
+function deleteMonthlyAttendance(month,id){
+  const q=employeeKey(id); const idx=(db.monthlyAttendance||[]).findIndex(x=>String(x.month)===String(month)&&employeeKey(x.id)===q);
+  if(idx<0)return alert('No saved attendance record found for this employee/month.');
+  if(!confirm('Delete monthly attendance for '+id+' in '+formatMonthEn(month)+'?'))return;
+  db.monthlyAttendance.splice(idx,1); persist(); renderMonthlyAttendanceGrid();
+}
+
+function saveMonthlyAttendanceAll(){
+  const month=val('attMonth');
+  if(!month)return alert('Please select a month.');
+  if(!db.monthlyAttendance)db.monthlyAttendance=[];
+  const rows=[...document.querySelectorAll('#monthlyAttendanceBody tr[data-monthly-row]')];
+  if(!rows.length)return alert('Please load employees first.');
+  rows.forEach(row=>{
+    const id=row.querySelector('.m-id').value;
+    const emp=employee(id); const oldRec=monthlyRecord(month,id)||{}; const data={month,id,location:oldRec.location||emp.location||'',present:+row.querySelector('.m-present').value||0,absent:+row.querySelector('.m-absent').value||0,leave:+row.querySelector('.m-leave').value||0,off:+row.querySelector('.m-off').value||0,ot:+row.querySelector('.m-ot').value||0,remarks:row.querySelector('.m-remarks').value||''};
+    const q=employeeKey(id); const idx=db.monthlyAttendance.findIndex(x=>String(x.month)===String(month)&&employeeKey(x.id)===q);
+    if(idx>=0)db.monthlyAttendance[idx]=data;else db.monthlyAttendance.push(data);
+  });
+  persist(); alert('Monthly attendance saved for all loaded employees.');
+}
+
+function getEmployeeLocations(id){let e=employee(id);let a=[];(e&&Array.isArray(e.locationHistory)?e.locationHistory:[]).forEach(x=>{if(x.location&&!a.includes(x.location))a.push(x.location)});if(e&&e.location&&!a.includes(e.location))a.push(e.location);(db.leave||[]).filter(x=>x.id===id&&x.location).forEach(x=>{if(!a.includes(x.location))a.push(x.location)});return a}
+function updateLeaveLocation(selected){let id=val('lEmp'),sel=document.getElementById('lLocation');if(!sel)return;let current=selected||sel.value;let locs=getEmployeeLocations(id);sel.innerHTML='<option value="">Select Location</option>'+locs.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('');if(current&&locs.includes(current))sel.value=current;else if(employee(id))sel.value=employee(id).location||'';}
+function saveLeave(){let id=val('lEmp'),from=val('lFrom'),to=val('lTo');if(!id||!from||!to)return alert('Employee, From and To are required.');let days=val('lDays');if(!days)days=Math.max(1,(new Date(to)-new Date(from))/86400000+1);let idx=+document.getElementById('leaveEditIndex').value;let old=idx>=0?db.leave[idx]:null;let loc=val('lLocation')||employee(id).location||'';let rec={voucher:old?old.voucher:'LV-'+String(db.leave.length+1).padStart(5,'0'),id,type:val('lType'),from,to,days,rejoin:val('lRejoin'),status:val('lStatus')||'Pending',reason:val('lReason')||'',remarks:val('lRemarks')||'',location:loc};if(idx>=0)db.leave[idx]=rec;else db.leave.push(rec);persist();clearLeave();alert(idx>=0?'Leave updated.':'Leave saved.')}
+function editLeave(i){let l=db.leave[i];document.getElementById('leaveEditIndex').value=i;document.getElementById('lEmp').value=l.id||'';updateLeaveLocation(l.location||'');document.getElementById('lType').value=l.type||'Annual';document.getElementById('lFrom').value=l.from||'';document.getElementById('lTo').value=l.to||'';document.getElementById('lDays').value=l.days||'';document.getElementById('lRejoin').value=l.rejoin||'';document.getElementById('lStatus').value=l.status||'Pending';document.getElementById('lReason').value=l.reason||'';document.getElementById('lRemarks').value=l.remarks||'';window.scrollTo(0,0)}
+function clearLeave(){let x=document.getElementById('leaveEditIndex');if(x)x.value=-1;['lEmp','lFrom','lTo','lDays','lRejoin','lReason','lRemarks'].forEach(id=>{let el=document.getElementById(id);if(el)el.value=''});let loc=document.getElementById('lLocation');if(loc)loc.innerHTML='<option value="">Select Location</option>';let st=document.getElementById('lStatus');if(st)st.value='Pending';let ty=document.getElementById('lType');if(ty)ty.value='Annual'}
+function renderLeave(){let t=document.getElementById('leaveTable');if(!t)return;t.innerHTML=db.leave.map((l,i)=>`<tr><td>${esc(l.voucher)}</td><td>${esc(l.id)}</td><td>${esc(employee(l.id).name)}</td><td>${esc(l.location||employee(l.id).location||'')}</td><td>${esc(l.type)}</td><td>${esc(l.from)}</td><td>${esc(l.to)}</td><td>${esc(l.days)}</td><td>${esc(l.rejoin||'')}</td><td>${esc(l.status||'Pending')}</td><td>${esc(l.reason||'')}</td><td>${esc(l.remarks||'')}</td><td><button class="btn" onclick="editLeave(${i})">Edit</button><button class="btn red" onclick="del(db.leave,${i})">Delete</button></td></tr>`).join('')}
+function updateSalaryAttendanceSummary(){ const id=val('sEmp'),month=val('sMonth'),box=document.getElementById('salaryAttSummary'); if(!box)return; if(!id||!month){box.textContent='Select employee and month';return;} const a=monthlyRecord(month,id); if(!a){box.innerHTML='No monthly attendance saved for <b>'+esc(formatMonthEn(month))+'</b>.';return;} box.innerHTML='<b>'+esc(formatMonthEn(month))+'</b> — Attend Days: <b>'+(+a.present||0)+'</b> | OT Hours: <b>'+(+a.ot||0)+'</b> | Absent: '+(+a.absent||0)+' | Leave: '+(+a.leave||0); }
+function saveSalary(){
+ const id=val('sEmp'),month=val('sMonth'); if(!id||!month)return alert('Employee and Month are required.');
+ const emp=employee(id); if(!emp.id)return alert('Employee not found.');
+ const basic=+val('sBasic')||0,h=+val('sHousing')||0,tr=+val('sTransport')||0,o=+val('sOther')||0,vpower=+val('sVPower')||0,fuel=+val('sFuel')||0,filling=+val('sFilling')||0,telephone=+val('sTelephone')||0,ot=+val('sOT')||0,d=+val('sDed')||0;
+ const data={month,id:emp.id,location:emp.location||'',basic,housing:h,transport:tr,other:o,vpower,fuel,filling,telephone,ot,ded:d,net:basic+h+tr+o+vpower+fuel+filling+telephone+ot-d};
+ const q=employeeKey(id); const idx=db.salary.findIndex(x=>String(x.month)===String(month)&&employeeKey(x.id)===q);
+ if(idx>=0) db.salary[idx]=data; else db.salary.push(data);
+ persist(); renderSalary(); updateSalaryAttendanceSummary(); alert(idx>=0?'Payroll updated for '+formatMonthEn(month)+'.':'Payroll saved for '+formatMonthEn(month)+'.');
+}
+function renderSalary(){let t=document.getElementById('salTable');if(!t)return;t.innerHTML=db.salary.map((s,i)=>`<tr><td>${formatMonthEn(s.month)}</td><td>${s.id}</td><td>${esc(employee(s.id).name)}</td><td>${esc(s.location||employee(s.id).location||'')}</td><td>${(+s.basic).toFixed(2)}</td><td>${(+s.housing+s.transport+s.other+s.vpower||0).toFixed(2)}</td><td>${(+s.vpower||0).toFixed(2)}</td><td>${(+s.fuel||0).toFixed(2)}</td><td>${(+s.filling||0).toFixed(2)}</td><td>${(+s.telephone||0).toFixed(2)}</td><td>${(+s.ot).toFixed(2)}</td><td>${(+s.ded).toFixed(2)}</td><td><b>${(+s.net).toFixed(2)}</b></td><td><button class="btn red" onclick="del(db.salary,${i})">Delete</button></td></tr>`).join('')}
+
+let memoImageData="";
+function previewMemoImage(ev){
+  const f=ev.target.files[0];
+  if(!f){memoImageData="";document.getElementById('memoPreview').innerHTML="";return;}
+  if(!f.type.startsWith('image/')){alert('Please select an image file.');ev.target.value='';return;}
+  const r=new FileReader();
+  r.onload=()=>{memoImageData=r.result;document.getElementById('memoPreview').innerHTML=`<b>Preview:</b><br><img src="${memoImageData}" style="max-width:220px;max-height:180px;border:1px solid #ccd5df;border-radius:6px;margin-top:6px">`};
+  r.readAsDataURL(f);
+}
+function clearMemo(){
+  ['mNo','mTitle','mDetails'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('mDate').value=new Date().toISOString().slice(0,10);
+  document.getElementById('mImage').value='';
+  document.getElementById('memoPreview').innerHTML='';
+  memoImageData="";
+}
+function saveMemo(){
+  const id=val('mEmp'), date=val('mDate'), title=val('mTitle').trim();
+  if(!id||!date||!title)return alert('Employee, Memo Date and Subject are required.');
+  const no=val('mNo').trim()||('MEMO-'+String(db.memos.length+1).padStart(4,'0'));
+  db.memos.push({no,date,id,location:employee(id).location||'',type:val('mType'),title,details:val('mDetails'),image:memoImageData});
+  persist(); clearMemo(); alert('Memo saved successfully.');
+}
+function renderMemos(){
+  const t=document.getElementById('memoTable'); if(!t)return;
+  t.innerHTML=db.memos.slice().reverse().map((m,ri)=>{
+    const i=db.memos.length-1-ri,e=employee(m.id);
+    return `<tr><td>${esc(m.no)}</td><td>${esc(m.date)}</td><td>${esc(m.id)} - ${esc(e.name)}</td><td>${esc(m.type)}</td><td>${esc(m.title)}</td>
+    <td>${m.image?`<img class="memo-thumb" src="${m.image}" title="Click to view large" onclick="openMemoImage('${m.image.replace(/'/g,"\\'")}')" style="width:55px;height:45px;object-fit:cover;border-radius:4px">`:'No Photo'}</td>
+    <td><button class="btn" onclick="printMemo(${i})">Print</button><button class="btn red" onclick="del(db.memos,${i})">Delete</button></td></tr>`
+  }).join('');
+}
+function printMemo(i){
+  const m=db.memos[i],e=employee(m.id);
+  const box=document.getElementById('memoPrintCard');
+  document.getElementById('memoPrintContent').innerHTML=`
+  <table><tr><th>Memo No.</th><td>${esc(m.no)}</td><th>Date</th><td>${esc(m.date)}</td></tr>
+  <tr><th>Employee ID</th><td>${esc(e.id)}</td><th>Name</th><td>${esc(e.name)}</td></tr>
+  <tr><th>Designation</th><td>${esc(e.designation)}</td><th>Memo Type</th><td>${esc(m.type)}</td></tr>
+  <tr><th>Subject</th><td colspan="3">${esc(m.title)}</td></tr></table>
+  <h3>Memo Details</h3><div style="white-space:pre-wrap;border:1px solid #ddd;padding:12px">${esc(m.details)}</div>
+  ${m.image?`<div style="margin-top:15px"><b>Attached Photo:</b><br><img src="${m.image}" style="max-width:500px;max-height:500px;margin-top:8px"></div>`:''}
+  <div style="margin-top:60px;display:flex;justify-content:space-between"><span>Employee Signature</span><span>HR / Management Signature</span></div>`;
+  box.style.display='block';
+  window.print();
+  setTimeout(()=>box.style.display='none',500);
+}
+
+function generateSlip(){let id=val('slipEmp'),m=val('slipMonth'),s=salaryRecord(m,id),e=employee(id);if(!s)return document.getElementById('slipContent').innerHTML='<b>No payroll record found for this employee/month.</b>';document.getElementById('slipContent').innerHTML=`<div class="grid"><p><b>Employee ID:</b> ${esc(e.id)}</p><p><b>Name:</b> ${esc(e.name)}</p><p><b>Designation:</b> ${esc(e.designation)}</p><p><b>Department:</b> ${esc(e.department)}</p><p><b>Month:</b> ${formatMonthEn(s.month)}</p></div><table><tr><th>Earnings</th><th>Amount</th><th>Deductions</th><th>Amount</th></tr><tr><td>Basic Salary</td><td>${(+s.basic).toFixed(2)}</td><td>Deduction</td><td>${(+s.ded).toFixed(2)}</td></tr><tr><td>Housing</td><td>${(+s.housing).toFixed(2)}</td><td></td><td></td></tr><tr><td>Transport</td><td>${(+s.transport).toFixed(2)}</td><td></td><td></td></tr><tr><td>Other Allowance</td><td>${(+s.other).toFixed(2)}</td><td></td><td></td></tr><tr><td>V-Power Incentive</td><td>${(+s.vpower||0).toFixed(2)}</td><td></td><td></td></tr><tr><td>Fuel Incentive</td><td>${(+s.fuel||0).toFixed(2)}</td><td></td><td></td></tr><tr><td>Filling Station Incentive</td><td>${(+s.filling||0).toFixed(2)}</td><td></td><td></td></tr><tr><td>Telephone Allowance</td><td>${(+s.telephone||0).toFixed(2)}</td><td></td><td></td></tr><tr><td>Overtime</td><td>${(+s.ot).toFixed(2)}</td><td></td><td></td></tr><tr><th>NET SALARY</th><th>${(+s.net).toFixed(2)}</th><th></th><th></th></tr></table>`}
+function searchEmployees(){let id=val('searchId').trim().toLowerCase(),name=val('searchName').trim().toLowerCase();let a=db.employees.filter(e=>(!id||e.id.toLowerCase().includes(id))&&(!name||e.name.toLowerCase().includes(name)));document.getElementById('searchResult').innerHTML=a.length?a.map(e=>`<div class="card"><b>${esc(e.id)} - ${esc(e.name)}</b><br>Company: ${esc(e.visa)} | Designation: ${esc(e.designation)} | Department: ${esc(e.department)} | Status: ${esc(e.status)}<br>Phone: ${esc(e.phone)} | Location: ${esc(e.location)}<br><button class="btn" onclick="document.getElementById('profileId').value='${esc(e.id)}';loadEmployeeProfile();window.scrollTo(0,0)">Open Full Profile</button></div>`).join(''):'No employee found.'}
+
+
+function openMemoImage(src){
+  document.getElementById('lightboxImg').src=src;
+  document.getElementById('imageLightbox').classList.add('show');
+}
+function closeMemoImage(ev){
+  if(ev) ev.stopPropagation();
+  document.getElementById('imageLightbox').classList.remove('show');
+  document.getElementById('lightboxImg').src='';
+}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeMemoImage();});
+
+function view360Document(employeeId,index){
+ const e=db.employees.find(x=>employeeKey(x.id)===employeeKey(employeeId));
+ const d=e&&(e.documents||[])[index];
+ if(!d||!d.file)return alert('Document file is not available.');
+ if(String(d.file).startsWith('data:image')){openMemoImage(d.file);return;}
+ openDocumentFile(d.file,d.fileName||d.name||'Document');
+}
+function loadEmployeeProfile(){
+  const id=val('profileId').trim();
+  const e=employee(id);
+  const box=document.getElementById('profileDetails');
+  if(!id){box.innerHTML='';return;}
+  if(!e.id){box.innerHTML='<div class="notice">Employee ID not found.</div>';return;}
+
+  const qId=employeeKey(id);
+  const leaves=db.leave.filter(l=>employeeKey(l.id)===qId);
+  const pays=db.salary.filter(s=>employeeKey(s.id)===qId);
+  const memos=db.memos.filter(m=>employeeKey(m.id)===qId);
+  const leaveDays=leaves.reduce((x,l)=>x+(+l.days||0),0);
+  const monthlyAtt=(db.monthlyAttendance||[]).filter(a=>employeeKey(a.id)===qId).sort((a,b)=>String(b.month).localeCompare(String(a.month)));
+  const totalAttendDays=monthlyAtt.reduce((x,a)=>x+(+a.present||0),0);
+  const totalOT=monthlyAtt.reduce((x,a)=>x+(+a.ot||0),0);
+
+  box.innerHTML=`
+  <div class="card">
+    <h3>👤 Personal / Employee Details</h3>
+    <div class="grid">
+      <div><b>Employee ID</b><br>${esc(e.id)}</div>
+      <div><b>Name</b><br>${esc(e.name)}</div>
+      <div><b>Visa Company</b><br>${esc(e.visa)}</div>
+      <div><b>Division</b><br>${esc(e.division)}</div>
+      <div><b>Designation</b><br>${esc(e.designation)}</div>
+      <div><b>Department</b><br>${esc(e.department)}</div>
+      <div><b>Category</b><br>${esc(e.category)}</div>
+      <div><b>Grade</b><br>${esc(e.grade)}</div>
+      <div><b>Nationality</b><br>${esc(e.nationality)}</div>
+      <div><b>Gender</b><br>${esc(e.gender)}</div>
+      <div><b>Date of Birth</b><br>${esc(e.dob)}</div>
+      <div><b>Join Date</b><br>${esc(e.join)}</div>
+      <div><b>Current Location</b><br>${esc(e.location)}</div>
+      <div><b>Status</b><br>${esc(e.status)}</div>
+      <div><b>Phone</b><br>${esc(e.phone)}</div>
+      <div><b>Email</b><br>${esc(e.email)}</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>📷 Employee Photo</h3>
+    ${e.photo?`<img src="${e.photo}" style="width:190px;height:190px;object-fit:cover;border-radius:10px;cursor:pointer" onclick="openMemoImage('${e.photo.replace(/'/g,"\\'")}')">`:'<div class="notice">No Employee Photo</div>'}
+  </div>
+  <div class="card">
+    <h3>📎 Employee Documents & Photos — ${(e.documents||[]).length} file(s)</h3>
+    ${Object.entries((e.documents||[]).reduce((g,d)=>{(g[d.type||'Other']??=[]).push(d);return g},{})).map(([type,arr])=>`<div class="card" style="box-shadow:none;border:1px solid #dce2e8"><h4>📁 ${esc(type)} — ${arr.length} file(s)</h4><div style="display:flex;flex-wrap:wrap">${arr.map((d,di)=>`<div class="doc-item" style="display:inline-flex;vertical-align:top;flex-direction:column;align-items:center;width:150px;margin:6px;padding:8px;border:1px solid #dce2e8;border-radius:8px;background:#fff">${String(d.file||'').startsWith('data:image')?`<img src="${esc(d.file||'')}" style="width:125px;height:95px;object-fit:cover;border-radius:6px;cursor:pointer" onclick="view360Document('${esc(e.id).replace(/'/g,"\\'")}',${(e.documents||[]).indexOf(d)})">`:`<button class="btn" type="button" onclick="view360Document('${esc(e.id).replace(/'/g,"\\'")}',${(e.documents||[]).indexOf(d)})">📄 Open PDF</button>`}<small style="max-width:130px;word-break:break-word">${esc(d.fileName||d.name||'Document')}</small>${d.expiry?`<small>Expiry: ${esc(d.expiry)}</small>`:''}</div>`).join('')}</div></div>`).join('')||'<div class="notice">No documents uploaded.</div>'}
+  </div>
+  <div class="card">
+    <h3>📍 Location History</h3>
+    <div style="overflow:auto"><table><tr><th>Location</th><th>From</th><th>To</th></tr>
+    ${(e.locationHistory||[]).slice().reverse().map(h=>`<tr><td><b>${esc(h.location||'')}</b></td><td>${esc(h.from||'')}</td><td>${esc(h.to||'Current')}</td></tr>`).join('')||'<tr><td colspan="3">No location history</td></tr>'}
+    </table></div>
+  </div>
+
+  <div class="card">
+    <h3>📅 Monthly Attendance & Overtime</h3>
+    <div class="grid">
+      <div><b>Total Attend Days</b><br><span class="stat">${totalAttendDays}</span></div>
+      <div><b>Total Overtime Hours</b><br><span class="stat">${totalOT}</span></div>
+      <div><b>Attendance Months</b><br><span class="stat">${monthlyAtt.length}</span></div>
+    </div>
+    <div style="overflow:auto"><table><tr><th>Location</th><th>Month</th><th>Total Attend Days</th><th>Absent</th><th>Leave</th><th>Off/Holiday</th><th>Overtime Hours</th><th>Remarks</th></tr>
+    ${monthlyAtt.map(a=>`<tr><td>${esc(a.location||e.location||'')}</td><td>${esc(formatMonthEn(a.month))}</td><td><b>${+a.present||0}</b></td><td>${+a.absent||0}</td><td>${+a.leave||0}</td><td>${+a.off||0}</td><td><b>${+a.ot||0}</b></td><td>${esc(a.remarks||'')}</td></tr>`).join('')}
+    </table></div>
+  </div>
+
+
+  <div class="card">
+    <h3>🌴 Leave History — Total ${leaveDays} Days</h3>
+    <div style="overflow:auto"><table><tr><th>Location</th><th>Voucher</th><th>Type</th><th>From</th><th>To</th><th>Days</th><th>Rejoin</th><th>Status</th><th>Reason</th></tr>
+    ${leaves.slice().reverse().map(l=>`<tr><td>${esc(l.location||e.location||'')}</td><td>${esc(l.voucher)}</td><td>${esc(l.type)}</td><td>${esc(l.from)}</td><td>${esc(l.to)}</td><td>${esc(l.days)}</td><td>${esc(l.rejoin)}</td><td>${esc(l.status||'Pending')}</td><td>${esc(l.reason||'')}</td></tr>`).join('')}
+    </table></div>
+  </div>
+
+  <div class="card">
+    <h3>💰 Salary / Payroll — Location-wise</h3>
+    <div style="overflow:auto"><table><tr><th>Location</th><th>Month</th><th>Basic</th><th>Allowances</th><th>V-Power</th><th>Fuel</th><th>Filling</th><th>Telephone</th><th>OT</th><th>Deduction</th><th>Net</th></tr>
+    ${pays.slice().reverse().map(s=>`<tr><td>${esc(s.location||'')}</td><td>${esc(formatMonthEn(s.month))}</td><td>${(+s.basic).toFixed(2)}</td><td>${(+s.housing+s.transport+s.other).toFixed(2)}</td><td>${(+s.vpower||0).toFixed(2)}</td><td>${(+s.fuel||0).toFixed(2)}</td><td>${(+s.filling||0).toFixed(2)}</td><td>${(+s.telephone||0).toFixed(2)}</td><td>${(+s.ot).toFixed(2)}</td><td>${(+s.ded).toFixed(2)}</td><td><b>${(+s.net).toFixed(2)}</b></td></tr>`).join('')}
+    </table></div>
+  </div>
+
+  <div class="card">
+    <h3>📄 Memo File (${memos.length})</h3>
+    <div style="overflow:auto"><table><tr><th>Location</th><th>Memo No.</th><th>Date</th><th>Type</th><th>Subject</th><th>Photo</th></tr>
+    ${memos.slice().reverse().map(m=>`<tr><td>${esc(m.location||e.location||'')}</td><td>${esc(m.no)}</td><td>${esc(m.date)}</td><td>${esc(m.type)}</td><td>${esc(m.title)}</td><td>${m.image?`<img class="memo-thumb" src="${m.image}" title="Click to view large" onclick="openMemoImage('${m.image.replace(/'/g,"\\'")}')" style="width:60px;height:45px;object-fit:cover;border-radius:4px">`:'No Photo'}</td></tr>`).join('')}
+    </table></div>
+  </div>`;
+}
+
+function renderReports(){let c=document.getElementById('reportContent');if(!c)return;let by={};db.salary.forEach(s=>by[s.month]=(by[s.month]||0)+(+s.net||0));let leaveDays=db.leave.reduce((x,l)=>x+(+l.days||0),0);c.innerHTML=`<h3>Summary</h3><table><tr><th>Metric</th><th>Value</th></tr><tr><td>Total Employees</td><td>${db.employees.length}</td></tr><tr><td>Active Employees</td><td>${db.employees.filter(e=>e.status==='Active').length}</td></tr><tr><td>Total Attendance Records</td><td>${db.attendance.length}</td></tr><tr><td>Total Leave Records</td><td>${db.leave.length}</td></tr><tr><td>Total Leave Days</td><td>${leaveDays}</td></tr></table><h3>Payroll by Month</h3><table><tr><th>Month</th><th>Net Payroll</th></tr>${Object.entries(by).map(([m,v])=>`<tr><td>${formatMonthEn(m)}</td><td>${v.toFixed(2)}</td></tr>`).join('')}</table>`}
+function backup(){let blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='HR_Backup.json';a.click();URL.revokeObjectURL(a.href)}
+function restore(ev){let f=ev.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{let x=JSON.parse(r.result);if(!x.employees||!x.attendance||!x.leave||!x.salary)throw 0;if(!x.memos)x.memos=[];if(!x.monthlyAttendance)x.monthlyAttendance=[];if(!x.locations)x.locations=[];db=x;syncLocationMaster();persist();alert('Data restored successfully.')}catch(e){alert('Invalid backup file.')}};r.readAsText(f)}
+// Separate read-only bridge to Cash Management's shared cloud sales data.
+const SHOP_SUPABASE_URL='https://pxfcrovaikcawhfbqkpd.supabase.co';
+const SHOP_SUPABASE_KEY='sb_publishable_0MDeM_nC7PWkobb4OKz9Og_HnvoTf-T';
+const SHOP_CLOUD_ID=1; let shopSalesCache=[]; let shopSalesLastFetch=0;
+async function loadSalesHistory(){const status=document.getElementById('salesHistoryStatus');if(status)status.textContent='☁ Loading sales history...';try{const r=await fetch(SHOP_SUPABASE_URL+'/rest/v1/hr_shared_data?id=eq.'+SHOP_CLOUD_ID+'&select=data',{headers:{apikey:SHOP_SUPABASE_KEY,Authorization:'Bearer '+SHOP_SUPABASE_KEY}});if(!r.ok)throw Error('Cloud request failed: '+r.status);const rows=await r.json();const cloud=rows[0]?.data||{};shopSalesCache=Array.isArray(cloud.sales)?cloud.sales:[];shopSalesLastFetch=Date.now();if(status)status.textContent='☁ Cloud loaded • '+shopSalesCache.length+' sales record(s)';renderEmployeeSalesHistory();}catch(e){console.error(e);if(status)status.textContent='⚠ Cloud sales data could not be loaded. Check internet and Supabase table access.';document.getElementById('employeeSalesRows').innerHTML='<tr><td colspan="9">Sales history unavailable</td></tr>';}}
+function renderEmployeeSalesHistory(){const id=String(document.getElementById('salesHistoryId')?.value||'').trim().toUpperCase().replace(/\s+/g,'');const month=String(document.getElementById('salesHistoryMonth')?.value||'');const rows=shopSalesCache.filter(s=>String(s.employeeId||'').trim().toUpperCase().replace(/\s+/g,'')===id&&(!month||String(s.dateKey||'').slice(0,7)===month));const total=rows.reduce((a,s)=>a+(+s.total||0),0),paid=rows.reduce((a,s)=>a+(+s.paid||0),0),due=rows.reduce((a,s)=>a+(+s.due||0),0);const summary=document.getElementById('salesHistorySummary');const emp=db.employees.find(e=>normalizeEmployeeId(e.id)===id);if(summary)summary.innerHTML=id?`<div class="notice"><b>Employee:</b> ${esc(emp?.name||'Name unavailable')} &nbsp; <b>Employee ID:</b> ${esc(emp?.id||id)}</div><div class="grid"><div class="card"><b>Invoices</b><div class="stat">${rows.length}</div></div><div class="card"><b>Total Sales</b><div class="stat">${total.toFixed(2)} OMR</div></div><div class="card"><b>Paid</b><div class="stat">${paid.toFixed(2)} OMR</div></div><div class="card"><b>Due</b><div class="stat">${due.toFixed(2)} OMR</div></div></div>`:'<div class="notice">Select an employee to view matching sales.</div>';const body=document.getElementById('employeeSalesRows');if(!body)return;body.innerHTML=rows.map(s=>`<tr><td>${esc(s.invoice||'')}</td><td>${esc(s.date||'')}</td><td>${esc(s.employeeId||'')}</td><td>${esc(s.salesman||'')}</td><td>${esc(s.customer||'')}</td><td>${(s.items||[]).map(x=>esc(x.name)+' × '+(+x.qty||0)).join('<br>')}</td><td>${(+s.total||0).toFixed(2)}</td><td>${(+s.paid||0).toFixed(2)}</td><td>${(+s.due||0).toFixed(2)}</td></tr>`).join('')||'<tr><td colspan="9">No matching sales found</td></tr>';}
+function printEmployeeSalesHistory(){if(!String(document.getElementById('salesHistoryId')?.value||'').trim())return alert('Select an employee first.');const page=document.getElementById('salesHistory');page.classList.add('printable');window.print();setTimeout(()=>page.classList.remove('printable'),800);}
+setInterval(()=>{if(document.getElementById('salesHistory')?.classList.contains('active')&&Date.now()-shopSalesLastFetch>15000)loadSalesHistory();},15000);
+setInterval(()=>document.getElementById('clock').textContent=new Date().toLocaleString(),1000);
+
+// Start app and load local cache, then cloud if configured.
+// startApp is launched after Admin Login
+</script>
+<script>
+(function(){
+const PASSWORD='Admin@1234';
+function unlock(){
+ const input=document.getElementById('adminPasswordInput');
+ const status=document.getElementById('adminGateStatus');
+ if(!input || input.value!==PASSWORD){if(status) status.textContent='❌ Incorrect password'; if(input){input.value='';input.focus();} return;}
+ const gate=document.getElementById('adminGate'); if(gate) gate.style.display='none';
+ const app=document.getElementById('appShell'); if(app) app.style.display='';
+ try{ if(typeof startApp==='function') startApp(); }catch(e){console.error(e);}
+}
+document.getElementById('adminLoginBtn').addEventListener('click',unlock);
+document.getElementById('adminPasswordInput').addEventListener('keydown',e=>{if(e.key==='Enter')unlock();});
+})();
+</script>
+</body>
+</html>
