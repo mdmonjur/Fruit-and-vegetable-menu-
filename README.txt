@@ -1,10 +1,17 @@
-MR Online Shop v22 — Delivery ETA + Automatic Customer Reply
+MR Online Shop v24 - Customer Inbox
 
-Added to online-shop.html:
-- Delivery estimate: within 100 km: 1–3 working days; over 100 km: 1–5 working days.
-- Customer Help chat widget with automatic replies for delivery, payment, order status, and contact-shop questions.
-- Chat replies follow the selected English/Arabic/Bengali language.
+Features:
+- Customer must log in to send messages from the shop chat.
+- Messages are stored in the shared shop data row in Supabase.
+- Admin and Salesman can open the Inbox tab, select a customer conversation, and reply.
+- Salesman conversations can be assigned to the salesman who first opens an unassigned thread.
+- Customer chat checks for staff replies while the chat window is open.
 
-GitHub update: replace online-shop.html, shop.html and hr.html with the files in this ZIP. Keep mr-logo-watermark.png in the same repository folder if your current design uses it. Commit changes, then refresh the live page.
+Install:
+1. Extract this ZIP.
+2. Upload online-shop.html, shop.html, hr.html, and mr-logo-watermark.png to the same GitHub repository folder, replacing the matching files.
+3. Commit changes.
+4. Log in to Shop Panel as Admin/Salesman and open Inbox.
 
-Note: delivery distance is presented as an estimate, not calculated automatically from shop GPS coordinates. Chat responses are scripted auto-replies, not a live human support service. Please test on the live site after deployment.
+Important:
+The current shared-row/public-client-key architecture is not suitable for sensitive customer messages or secure role permissions. For production use, implement Supabase Auth, dedicated messages table, and Row Level Security policies. Browser end-to-end testing is still required after deployment.
