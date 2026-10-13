@@ -1,9 +1,10 @@
-MR Online Shop v21 - Country Selector
+MR Online Shop v22 — Delivery ETA + Automatic Customer Reply
 
-Included: online-shop.html, shop.html, hr.html, mr-logo-watermark.png
+Added to online-shop.html:
+- Delivery estimate: within 100 km: 1–3 working days; over 100 km: 1–5 working days.
+- Customer Help chat widget with automatic replies for delivery, payment, order status, and contact-shop questions.
+- Chat replies follow the selected English/Arabic/Bengali language.
 
-Update GitHub by replacing these files with the files in this ZIP. Keep all four in the same repository folder.
+GitHub update: replace online-shop.html, shop.html and hr.html with the files in this ZIP. Keep mr-logo-watermark.png in the same repository folder if your current design uses it. Commit changes, then refresh the live page.
 
-The customer checkout now includes a country selector (Oman, Bangladesh, UAE, Saudi Arabia, Qatar, Kuwait, Bahrain, India, Pakistan, US, UK, Other). Selected country is saved with the order and shown on the order bill. The phone field remains manually entered; the dial code is shown in the selector and saved with the order.
-
-Important: test a sample order after publishing. This project uses the existing shared JSON database and is not production-secure for private customer/payment data.
+Note: delivery distance is presented as an estimate, not calculated automatically from shop GPS coordinates. Chat responses are scripted auto-replies, not a live human support service. Please test on the live site after deployment.
